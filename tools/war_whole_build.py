@@ -156,7 +156,110 @@ def merge(data, cas):
         off += e["scene"]["dur"] + GAP
     out["casualties"] = casualties
     out["whole"] = {"date0": DAYS[0][0], "days": days}
+    if AUDIT_MARKS:
+        audit_marks(out)
+    if LABEL_FIX:
+        label_fix(out)
+    if BATTLE_FILL:
+        import war_battle_fill
+        war_battle_fill.fill(out, {"il": "כוח צה״ל בקרב", "ar": "הכוח הערבי בקרב"})
+    if BATTLE_FIRE:
+        import war_battle_fire
+        war_battle_fire.fire(out)   # R36: both sides fire at each other (the owner 10-26)
+    if INTRO_SCREEN:
+        out["intro"] = SIX_INTRO     # R48 opening screen (the owner 10-26); figures from war/data/1967-casualties.json, each side's ranges as the sources give them
+    if SOURCE_LINKS:
+        mp = ROOT / "war" / "data" / "1967-source-links.json"      # made by `war_source_links.py --map` (network at authoring time, none at deploy)
+        if mp.exists():
+            m = json.loads(mp.read_text(encoding="utf-8")); curl = set(m.pop("_current", [])); byt = {}; byq = {}; curq = set()
+            for c in out["events"]:
+                if c["id"] in m:
+                    c["source_url"] = m[c["id"]]; byt[c["title"]] = m[c["id"]]; byq[c["quote"]] = m[c["id"]]
+                    if c["id"] in curl: c["source_cur"] = 1; curq.add(c["quote"])      # re-pinned to the CURRENT article text: our card summarises that passage, it is not a verbatim quote of the pinned revision
+            for l in out["scene"]["log"]:
+                h = byq.get(l.get("q")) or byt.get(l.get("n"))
+                if h:
+                    l["href"] = h
+                    if l.get("q") in curq: l["hcur"] = 1
+    if STOPPED:
+        import war_stopped
+        for c in out["events"]:
+            if c["id"] in STOP_EXEMPT: c["stopped_ok"] = STOP_EXEMPT[c["id"]]
+        war_stopped.apply(out, STOPS, area="sinai")    # R49 (the owner 10-26): נבלם = destroyed, בולמת = both sides lose, מאמץ עליון = very heavy
+    if SHOOTERS:
+        import war_shooters
+        war_shooters.apply(out)      # R51 (the owner 10-26): a shoot-down comes after the shooting side's aircraft arrived, with fire before the fall
+    if SURRENDER_FLAG:
+        import war_surrender
+        war_surrender.fill(out)    # R43: a white flag over every surrender report (the owner 10-26)
+    if PUSHOUT:
+        import war_pushout
+        out['pushout_specs'] = PUSHOUT_SPECS
+        war_pushout.apply(out, PUSHOUT_SPECS)   # R45: a force a card says withdrew/was pushed out LEAVES the area (the owner 10-26)
+        import war_retreat, war_landcheck
+        war_retreat.apply(out, war_landcheck.load_mask())      # R50: the retreat is a disorderly group, gun toward the enemy (template), some hit on the way (seeded)
+    if FOOT_EXPIRY:
+        import war_foot_expiry
+        war_foot_expiry.apply(out)   # R44: a foot unit leaves the map 6 simulated hours after its last update (the owner 10-26)
+    if SFX_COVER:
+        import war_sfx
+        war_sfx.cover(out["scene"])    # R40: every noisy item has a cue
     return out
+
+
+AUDIT_MARKS = True   # the owner 10-26 event audit: a card with a place and nothing drawn there at its time gets a labelled marker at its own place (separate commit, so the owner can pick)
+BATTLE_FIRE = True   # LAW R36 (the owner 10-26): a battle is visible - both sides fire at each other, impacts, contact (separate flag/commit)
+INTRO_SCREEN = True    # R48 opening screen with war name, dates, casualties of both sides (separate flag)
+SIX_INTRO = {"title": "מלחמת ששת הימים", "dates": "5–10 ביוני 1967",
+             "sides": [{"k": "il", "name": "ישראל", "lines": ["הרוגים 776–983 (כ-780 לפי הערך העברי; 776–983 בערבי; פחות מ-1,000 באנגלי)", "פצועים כ-2,590 (עברי) · 4,517 (ערבי)"]},
+                       {"k": "ar", "name": "מצרים, ירדן, סוריה ועיראק", "lines": ["הרוגים 15,000–25,000 (טווח הערכות; מצרים לבדה 10,000–15,000)", "אין נתון אחיד לפצועים ולשבויים בערכים שמצוטטים"]}],
+             "src": {"t": "ויקיפדיה: מלחמת ששת הימים (הגרסה המצוינת) ועוד ערכים בטבלת האבדות", "u": "https://he.wikipedia.org/w/index.php?title=%D7%9E%D7%9C%D7%97%D7%9E%D7%AA_%D7%A9%D7%A9%D7%AA_%D7%94%D7%99%D7%9E%D7%99%D7%9D&oldid=44044273"},
+             "note": "מספרים משתנים בין מקורות - מוצגים כטווח"}
+SOURCE_LINKS = True    # R47 card titles link to the source passage (separate flag)
+SHOOTERS = True     # R51 (separate flag): shooters arrive before every shoot-down
+STOPPED = True    # R49 (separate flag): the stopped / holds / very-heavy families (tools/war_keywords.py)
+STOPS = [{"card": "d2-s0", "fam": "hold", "side": "ar", "wrecks": 3, "dwrecks": 2}]      # brigade 520 holds the Egyptian tank battalion of brigade 114 at Jebel Libni: both sides lose
+STOP_EXEMPT = {"d2-s3": "the same sentence says the Egyptian force withdrew to the Jebel Libni - Bir Hasana line: held, not destroyed (decision for the owner)",
+               "d3-c10": "brigade 10 'נבלמו מחשש לפגיעה באגפם': a halt by the brigade's own caution, no enemy action: no destruction"}
+SURRENDER_FLAG = True   # R43 white flag, 2 simulated hours, over each surrender report (separate flag)
+PUSHOUT = True       # R45 (separate flag): units of a side leave the area its card says it was driven from
+PUSHOUT_SPECS = [   # our reading of the cards: area boxes are approximate (labelled retreats), destinations are the side's own lines
+    {"card": "d2-s7", "side": "ar", "box": [[29.6, 32.55], [31.3, 34.35]], "to": [30.4, 32.2]},      # general Egyptian withdrawal across the Suez canal
+    {"card": "d2-c11", "side": "ar", "box": [[31.4, 34.9], [32.6, 35.6]], "to": [31.9, 35.95]},     # Jordan orders the withdrawal from the West Bank
+    {"card": "d6-g1", "side": "ar", "box": [[32.55, 35.55], [33.25, 35.97]], "to": [33.25, 36.42]}, # withdrawal order to the Syrian army (the Golan)
+]
+FOOT_EXPIRY = True   # R44 foot units expire 6 simulated hours after their last update (separate flag)
+SFX_COVER = True     # R40: sound cue for every noisy item (separate flag/commit)
+BATTLE_FILL = True   # LAW R35 (the owner 10-26): every battle card animates both sides at its place; the missing side is drawn schematically (separate commit)
+LABEL_FIX = True     # checklist 14: every moving symbol says (סכמטי) (separate commit)
+
+
+def audit_marks(out):
+    import math
+    import test_war_event_shown as es
+    sc, places, n = out["scene"], out["places"], 0
+    for c in out["events"]:
+        pl = [(places[g["place"]]["lat"], places[g["place"]]["lon"]) for g in c.get("geometry", []) if g.get("place") in places]
+        if not pl:
+            continue
+        cand = [x for x in sc["acts"] if x.get("min") is not None]
+        a = min(cand, key=lambda x: abs(x["min"] - c["start_min"]), default=None)
+        if not a or abs(a["min"] - c["start_min"]) > 90:
+            continue
+        live = [it for it in sc["items"] if es.span(it)[1] >= a["s"] and a["s"] - 0.5 <= es.span(it)[0] + (6 if it["type"] in ("walk", "fly", "arrow") else 0) <= a["s"] + es.WIN]   # NEW at the card's time (what the browser audit counts), not a unit already standing there
+        if any(math.hypot(p[0] - la, p[1] - lo) <= es.R for it in live for p in es.pts(it) for la, lo in pl):
+            continue
+        src = c.get("src") or {}
+        sc["items"].append({"type": "mark", "at": [round(pl[0][0], 5), round(pl[0][1], 5)], "t0": round(a["s"] + 0.2, 2), "t1": round(a["s"] + 9, 2), "label": c["title"][:90], "area": c.get("area") or "all",
+                            "q": c["quote"][:300], "s": src.get("s") or "", "audit": 1})
+        n += 1
+    out["audit_marks"] = n
+
+
+def label_fix(out):
+    for it in out["scene"]["items"]:
+        if it["type"] in ("walk", "fly") and "סכמטי" not in (it.get("label") or "") and not it.get("sk") and it.get("label"):
+            it["label"] += " (סכמטי)"
 
 
 def build(stage):

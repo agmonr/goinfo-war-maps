@@ -17,7 +17,7 @@ def row(path):
     cues = len(sc.get('sfx') or [])
     land = len(lc.check(path)) if sc else None
     sh = es.check(path); hv = hl.check(path)
-    unlabeled = sum(1 for it in items if it['type'] in ('walk', 'fly') and 'סכמטי' not in (it.get('label') or '') and not it.get('sk'))
+    unlabeled = sum(1 for it in items if it['type'] in ('walk', 'fly') and it.get('label') and 'סכמטי' not in it['label'] and not it.get('sk'))
     return dict(cards=len(cards), items=len(items), sfx=cues, pace=play_per_day, land=land, shown=(len(sh[2]) if sh else 'n/a'), unlabeled=unlabeled, heavy=(len(hv[1]) if hv else 'n/a'))
 def main():
     rows = []

@@ -9,7 +9,7 @@ with sync_playwright() as p:
     pg.goto(U + '?intro=0&autoreturn=0', wait_until='load'); pg.wait_for_timeout(3000)
     pg.evaluate("window.__a67.A.playing&&document.getElementById('aPlay').click()")
     S = "({T:+window.__a67.A.T.toFixed(2),pl:window.__a67.A.playing})"
-    V = """()=>{const m=window.__a67.map(),A=window.__a67.A,B=m.getBounds(),ct=m.getCenter();let best=1e9,ok=false;A.acts.forEach(a=>{if(Math.abs(a.s-A.T)<4){const b=a.view,c=[(b[0][0]+b[1][0])/2,(b[0][1]+b[1][1])/2],d=Math.max(Math.abs(ct.lat-c[0]),Math.abs(ct.lng-c[1]));best=Math.min(best,d);if(B.contains(c))ok=true}});return {centre_in_view:ok,dlat:+best.toFixed(2),span:+(B.getNorth()-B.getSouth()).toFixed(2)}}"""
+    V = """()=>{const m=window.__a67.map(),A=window.__a67.A,a=A.acts[A.cur],b=a.view,c=[(b[0][0]+b[1][0])/2,(b[0][1]+b[1][1])/2],B=m.getBounds(),ct=m.getCenter();return {centre_in_view:B.contains(c),dlat:+Math.abs(ct.lat-c[0]).toFixed(2),dlng:+Math.abs(ct.lng-c[1]).toFixed(2),span:+(B.getNorth()-B.getSouth()).toFixed(2)}}"""
     R['paused_start'] = pg.evaluate(S)
     for nm, btn in (('next', '#aNext'), ('prev', '#aPrev')):
         pg.click(btn); pg.wait_for_timeout(200); a = pg.evaluate(S); pg.wait_for_timeout(1800); c = pg.evaluate(S); v = pg.evaluate(V)
