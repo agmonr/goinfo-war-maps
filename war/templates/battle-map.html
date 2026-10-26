@@ -1,0 +1,902 @@
+<!doctype html>
+<html lang="he" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="robots" content="noindex, nofollow">
+<link rel="canonical" href="__CANONICAL__">
+<title>__TITLE__</title>
+<meta name="description" content="__DESC__">
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="">
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+<style>
+:root{--bg:#f6f1ea;--fg:#241c15;--card:#fff;--mu:#6b5d50;--bd:#e0d5c7;--ac:#1d5ea8;--red:#b3261e;--ok:#1a6b3c;--warn:#8a5a00;--bar:38px}
+@media(prefers-color-scheme:dark){:root{--bg:#171310;--fg:#f0e8dd;--card:#231d17;--mu:#a89a8b;--bd:#3d342b;--ac:#7fb3f0;--red:#ff8a80;--ok:#6fcf97;--warn:#f0c060}}
+*{box-sizing:border-box}html,body{height:100%;margin:0;overflow:hidden}body{background:var(--bg);color:var(--fg);font:15px/1.5 system-ui,Arial,sans-serif}
+#app{position:fixed;inset:0;height:100dvh}#map{position:absolute;inset:0 0 var(--bar) 0}
+.top{position:absolute;z-index:1000;top:8px;inset-inline:8px;display:flex;flex-wrap:wrap;gap:6px;align-items:center;pointer-events:none}
+.top>*{pointer-events:auto}.ttl{background:var(--card);border:1px solid var(--bd);border-radius:10px;padding:4px 10px;font-weight:700;font-size:15px;flex:1 1 auto;min-width:0}
+.ttl small{display:block;font-weight:400;font-size:11px;color:var(--warn)}.ttl small.ctx{color:var(--fg);font-size:12px}
+.btn{font:inherit;font-size:13px;border:1px solid var(--bd);background:var(--card);color:var(--fg);border-radius:10px;min-height:40px;padding:0 10px;cursor:pointer;white-space:nowrap}
+.btn[aria-pressed=true]{background:var(--ac);color:#fff;border-color:var(--ac)}
+.tl{position:absolute;z-index:1000;inset-inline:8px;bottom:calc(var(--bar) + 8px);display:none;align-items:center;gap:8px;background:var(--card);border:1px solid var(--bd);border-radius:12px;padding:4px 10px}
+body.timed .tl{display:flex}body.timed.sheet-open .tl{display:none}
+.tl button{font:inherit;border:1px solid var(--bd);background:var(--card);color:var(--fg);border-radius:10px;min-width:44px;height:44px;cursor:pointer}
+.tl input{flex:1;min-width:0;height:44px}#clock{font-variant-numeric:tabular-nums;font-weight:700;min-width:3.4em;text-align:center;direction:ltr}
+.tk{position:absolute;z-index:1000;inset-inline:18px;bottom:calc(var(--bar) + 58px);display:none;justify-content:space-between;color:var(--fg);font-size:10.5px;direction:ltr;pointer-events:none;text-shadow:0 0 3px var(--bg),0 0 3px var(--bg)}
+body.timed .tk{display:flex}body.timed.sheet-open .tk{display:none}
+.panel{position:absolute;z-index:1100;background:var(--card);border:1px solid var(--bd);display:none;flex-direction:column}
+.panel.open{display:flex}
+.cards{overflow:auto;padding:8px 10px 14px;flex:1}
+.sheet{inset-inline:0;bottom:var(--bar);height:56dvh;border-radius:16px 16px 0 0}
+.panel h2{font-size:15px;margin:0;padding:10px 12px;border-bottom:1px solid var(--bd);display:flex;justify-content:space-between;align-items:center}
+.panel h2 button{font:inherit;border:0;background:none;color:var(--fg);font-size:20px;min-width:40px;min-height:40px;cursor:pointer}
+.legend{inset-inline:8px;bottom:calc(var(--bar) + 8px);border-radius:12px;padding:10px 12px;font-size:13px;color:var(--mu);max-height:60dvh;overflow:auto}
+.legend b{color:var(--fg)}.lg{display:block;margin:3px 0}
+.tt.pl{pointer-events:none}.smoke{position:absolute;left:0;top:0;width:26px;height:26px;pointer-events:none}.smoke i{position:absolute;left:3px;top:3px;width:20px;height:20px;border-radius:50%;background:radial-gradient(circle,rgba(190,190,190,.95) 0,rgba(140,140,140,.8) 50%,rgba(120,120,120,0) 74%);animation:puff 1s ease-out forwards}.smoke i:nth-child(2){left:-3px;top:6px;animation-delay:.06s}.smoke i:nth-child(3){left:9px;top:-1px;animation-delay:.12s}@keyframes puff{0%{transform:scale(.5);opacity:.95}100%{transform:scale(2.1) translateY(-8px);opacity:0}}.leaflet-popup,.leaflet-tooltip{direction:rtl;text-align:right}.leaflet-popup-content-wrapper{text-align:right;direction:rtl}.leaflet-popup-content{direction:rtl;text-align:right;unicode-bidi:isolate}.leaflet-popup-content div,.leaflet-popup-content small{direction:rtl;text-align:right}.leaflet-container a.leaflet-popup-close-button{right:auto;left:0;padding:6px 0 0 6px;text-align:left}.leaflet-popup-content{margin:13px 14px 13px 24px}
+.sw{display:inline-block;width:22px;height:0;border-top:3px dashed #888;vertical-align:middle}.k .sw.dot{background:#000;border-color:#000}.sw.dot{width:12px;height:12px;border:2px solid #333;border-radius:50%;background:#fff;vertical-align:middle}.sw.area{width:18px;height:12px;border:2px dashed var(--warn);background:rgba(240,192,96,.25);vertical-align:middle}
+@media(min-width:900px){.sheet{inset-inline:auto;inset-block:56px calc(var(--bar) + 8px);inset-inline-start:8px;width:390px;height:auto;border-radius:12px}.legend{inset-inline:auto;inset-inline-start:8px;width:360px}body.timed .tl{inset-inline-start:420px}body.timed .tk{inset-inline-start:430px}body:not(.sheet-open) .tl{inset-inline-start:8px}}
+.card{background:var(--bg);border:1px solid var(--bd);border-radius:12px;padding:9px 11px;margin-bottom:9px;cursor:pointer;border-inline-start:5px solid var(--bd)}
+.card.sel,.card.now{border-inline-start-color:var(--ac);box-shadow:0 2px 10px rgba(0,0,0,.15)}body.timed .card{opacity:.5}body.timed .card.past{opacity:.85}body.timed .card.now{opacity:1}
+.card .tm{font-weight:700;color:var(--ac);font-size:13.5px}.card h3{margin:.1em 0 .3em;font-size:15.5px}
+.card q{display:block;font-size:14px;quotes:"«" "»";line-height:1.55}.card .np{font-size:12.5px;color:var(--warn);margin-top:6px}.card .nt{font-size:12.5px;color:var(--mu);margin-top:4px}
+.badge{display:inline-block;font-size:11px;border-radius:6px;padding:1px 6px;margin-inline-end:4px;border:1px solid var(--bd);color:var(--mu)}
+.badge.ex{color:var(--ok);border-color:var(--ok)}.badge.ap{color:var(--warn);border-color:var(--warn)}.badge.no{color:var(--red);border-color:var(--red)}
+.ic{display:inline-flex;align-items:center;justify-content:center;width:28px;height:28px;border-radius:50%;font-size:15px;line-height:1;border:2px solid #fff;box-shadow:0 1px 4px rgba(0,0,0,.5);color:#fff}
+.ic.iaf{background:#1d5ea8}.ic.syr{background:#b3261e}.ic.gnd{background:#5a4a30}.ic.civ{background:#8a5a00}.ic.kill{background:#222}.qdot{display:block;width:10px;height:10px;border-radius:50%;background:rgba(90,80,70,.6);border:1.5px solid #fff;box-sizing:border-box}
+.bar{position:absolute;z-index:1200;inset-inline:0;bottom:0;height:var(--bar);background:var(--card);border-top:1px solid var(--bd);display:flex;align-items:center;gap:8px;padding:0 10px;font-size:12px;color:var(--mu)}
+.bar span{flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.bar a{color:var(--ac)}.bar button{font:inherit;font-size:12px;border:1px solid var(--bd);background:none;color:var(--fg);border-radius:8px;min-height:30px;padding:0 8px;cursor:pointer}
+.credit{inset-inline:8px;bottom:calc(var(--bar) + 8px);border-radius:12px;padding:10px 14px;font-size:13px;max-height:70dvh;overflow:auto}.credit a{color:var(--ac)}
+@media(min-width:900px){.credit{inset-inline:auto;inset-inline-end:8px;width:520px}}
+.tt{background:var(--card);color:var(--fg);border:1px solid var(--bd);border-radius:8px;padding:3px 8px;font-size:12.5px;box-shadow:none}
+body.anim #bTime,body.anim #bCards{display:none}
+.leaflet-marker-icon.dim{opacity:.45}
+.ap{display:block;filter:drop-shadow(0 1px 2px rgba(0,0,0,.6))}.ap svg{display:block}.ap.gu{transform:scale(clamp(.85,var(--s,1),1.45));transform-origin:50% 50%}
+.bld{width:calc(18px*var(--bs,1))!important;height:calc(18px*var(--bs,1))!important;margin-left:calc(-9px*var(--bs,1))!important;margin-top:calc(-9px*var(--bs,1))!important;border-radius:50%;background:#222;border:2px dashed #fff;opacity:.9}
+
+/* the SCALE of the forces at the opening (the owner 10-23: "the page should give a sense of the size of the forces; frightening"): area-proportional bubbles per front, only sourced numbers */
+.scalebox{position:absolute;inset-inline-start:50%;top:56px;transform:translateX(50%);z-index:1150;background:rgba(18,18,22,.9);color:#fff;border:1px solid #444;border-radius:12px;padding:10px 16px 8px;font:13px/1.35 system-ui,sans-serif;direction:rtl;pointer-events:none;transition:opacity .8s;max-width:min(560px,92%);text-align:center}
+.scalebox[hidden]{display:none}.scalebox.off{opacity:0}.scalebox h4{margin:0 0 4px;font-size:14px}
+.scalebox .sc-row{display:flex;justify-content:center;gap:26px;align-items:flex-end}.scalebox .sc-f{display:flex;flex-direction:column;align-items:center;gap:2px}
+.scalebox .sc-b{display:flex;align-items:flex-end;gap:6px}.scalebox .sc-c{border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:12px;color:#fff}
+.scalebox .sc-a{background:#c62d26}.scalebox .sc-i{background:#1d6fd1}.scalebox small{color:#cfcfcf;display:block}
+@media (max-width:699px){.scalebox{top:60px;padding:6px 8px;font-size:11px}.scalebox .sc-row{gap:12px}}
+.bld.held{background:#1d5ea8;border:2px solid #fff}.bld.fell{background:#b3261e;border:2px solid #fff}  /* a stronghold marker: blue = holding, red = fell / evacuated (the owner 10-23) */
+.base{width:34px;height:34px;border-radius:50%;border:2px dashed #555;background:rgba(255,255,255,.55);font-size:10px;line-height:30px;text-align:center;color:#222;font-weight:700}
+.bomb{width:8px;height:12px;background:#111;border-radius:3px 3px 5px 5px;border:1px solid #fff}
+.muz{width:18px;height:18px;border-radius:50%;background:radial-gradient(circle,#fff 0,#ffd24a 34%,rgba(255,120,30,.85) 64%,rgba(255,120,30,0) 72%);pointer-events:none}
+.boom{width:46px;height:46px;border-radius:50%;background:radial-gradient(circle,#fff 0,#ffd24a 25%,#ff7b1a 55%,rgba(200,40,0,0) 72%);pointer-events:none}
+.shot{width:12px;height:12px;border-radius:3px;background:rgba(255,255,255,.9);border:2px solid #1d3f73}
+.shl{width:10px;height:10px;background:#e0301e;border:1px solid #fff;transform:rotate(45deg);box-shadow:0 0 5px 1px rgba(224,48,30,.6)}
+.csym{display:inline-flex;vertical-align:-3px;line-height:0}.csym svg{width:15px;height:15px}.cbadge svg{width:18px;height:18px}
+.smoke{width:14px;height:14px;border-radius:50%;background:#444;opacity:.5}
+.lbl{background:var(--card);color:var(--fg);border:1px solid var(--bd);border-radius:7px;padding:1px 6px;font-size:11.5px;white-space:nowrap}
+
+
+/* ===== animation UI: portrait phone = bottom stack; desktop and landscape phone = explanation side panel + control rail on the map ===== */
+:root{--panelW:360px}
+.animui{position:absolute;z-index:1150;inset-inline:8px;bottom:calc(var(--bar) + 8px);display:grid;grid-template-columns:1fr auto;gap:6px;pointer-events:none}
+.animui[hidden]{display:none}.animui button,.animui input,.hud,.cap,.banner{pointer-events:auto}
+.infop{grid-column:1/-1;display:flex;flex-direction:column;gap:6px;pointer-events:none}.infop>*{pointer-events:auto}.pcol{display:none}
+.rail{display:contents}.g1{grid-column:1/-1;display:flex;gap:3px;background:var(--card);border:1px solid var(--bd);border-radius:12px;padding:3px 4px}
+.animui .scrub button{flex:none;width:40px}.scrub{grid-column:1;display:flex;align-items:center;gap:3px;background:var(--card);border:1px solid var(--bd);border-radius:12px;padding:3px 4px;min-width:0}
+.g2{grid-column:2;display:flex;gap:3px;background:var(--card);border:1px solid var(--bd);border-radius:12px;padding:3px 4px}
+.animui button{font:inherit;font-size:13px;border:1px solid var(--bd);background:var(--card);color:var(--fg);border-radius:10px;min-width:31px;flex:1 1 0;height:38px;padding:0 2px;cursor:pointer}
+.animui button[aria-pressed=true]{background:var(--ac);color:#fff;border-color:var(--ac)}
+.animui input{flex:1 1 0;min-width:0;height:38px}.sp{min-width:2.2em;text-align:center;font-weight:700;align-self:center;font-size:13px}
+.banner{align-self:center;background:#fff3cd;color:#5c4400;border:1px solid #e8cf7a;border-radius:10px;padding:3px 10px;font-size:12.5px;font-weight:600;text-align:center}
+.cap{background:var(--card);border:1px solid var(--bd);border-radius:12px;padding:6px 10px;font-size:14px;line-height:1.55;max-height:22dvh;overflow:auto}
+.ev{border-inline-start:4px solid var(--bd);padding:4px 8px;margin-bottom:8px;opacity:.72;background:var(--card)}.ev.last{opacity:1;border-inline-start-color:var(--ac)}
+.ev .tm{font-size:11.5px;font-weight:700;color:var(--ac)}.ev q{display:block;quotes:"«" "»"}.ev small{display:block;color:var(--mu);font-size:12px;margin-top:2px}
+.wk{display:flex;gap:1px;align-items:flex-end;justify-content:center;pointer-events:auto}.wk svg{width:24px;height:24px;display:block;filter:drop-shadow(0 1px 1px rgba(0,0,0,.45))}.wk .mult{font:700 11px system-ui,Arial;color:#fff;background:#222;border-radius:8px;padding:0 5px;align-self:center;margin-inline-start:2px}
+.sflag svg{display:block;filter:drop-shadow(0 1px 1.5px rgba(0,0,0,.55))}.sflag .cl{transform-origin:6px 10px;animation:sfw 1s ease-in-out infinite alternate}@keyframes sfw{from{transform:skewY(-5deg) scaleX(.94)}to{transform:skewY(5deg) scaleX(1.06)}}@media (prefers-reduced-motion:reduce){.sflag .cl{animation:none}}
+.ls .lw{position:relative;display:block;width:24px;height:24px}.ls .lw svg{position:absolute;left:0;top:0;width:24px;height:24px}.ls .lw .lf{z-index:2}
+.wk .fire{animation:wkf 1.1s ease-in-out infinite alternate;transform-origin:50% 100%}@keyframes wkf{from{transform:scale(.85);opacity:.85}to{transform:scale(1.15);opacity:1}}.wk .sm{animation:wks 3.2s ease-out infinite;transform-origin:50% 100%}@keyframes wks{from{transform:translateY(0) scale(.7);opacity:.7}to{transform:translateY(-7px) scale(1.4);opacity:0}}@media(prefers-reduced-motion:reduce){.wk .fire,.wk .sm{animation:none}}
+@keyframes evin{from{transform:translateX(70px);opacity:0}to{transform:none;opacity:1}}.ev.new{animation:evin .55s ease-out}
+.animui .logback{position:sticky;top:0;z-index:3;align-self:center;flex:none;width:auto;height:auto;min-width:0;min-height:0;line-height:1.3;background:var(--ac,#1d5ea8);color:#fff;border:0;border-radius:16px;padding:4px 14px;font-size:13px;cursor:pointer;box-shadow:0 1px 5px rgba(0,0,0,.3)}.animui .logback[hidden]{display:none}.ev.last{background:rgba(29,94,168,.09)}.cap .ev{cursor:pointer}.cap .ev:focus-visible{outline:2px solid var(--ac,#1d5ea8)}.cap small{display:block;color:var(--mu);font-size:12px;margin-top:2px}
+.hud{position:fixed;z-index:1150;top:98px;inset-inline-start:8px;background:var(--card);border:1px solid var(--bd);border-radius:10px;padding:3px 10px;display:flex;flex-direction:column;font-size:12px;color:var(--mu)}
+.hud[hidden]{display:none}.hud b{font-size:17px;color:var(--fg)}.hint{color:var(--warn)}.hint[hidden]{display:none}
+body.anim .tl,body.anim .tk{display:none!important}body.anim #bTime,body.anim #bCards{display:none}
+body.nobub .leaflet-tooltip{display:none!important}
+#evn{position:absolute;z-index:1000;top:58px;inset-inline:64px;max-width:520px;margin-inline:auto;pointer-events:none;display:flex;flex-direction:column;gap:4px;text-align:center}#evn[hidden]{display:none}#evn div{background:var(--card);border:1px solid var(--ac);border-radius:10px;padding:5px 10px;font-size:13px;line-height:1.35;color:var(--fg,inherit)}
+/* helicopter rotor (the owner 10-26): the blades turn around the hub, one shared CSS animation (about 1.8 turns per second); still when the helicopter is on the ground, when the clock is paused (body.pz) and under reduced motion */
+.hr{transform-origin:15px 14px;animation:hrot .55s linear infinite}@keyframes hrot{to{transform:rotate(360deg)}}.hs .hr,body.pz .hr{animation-play-state:paused}.hs .hr{animation:none}@media (prefers-reduced-motion:reduce){.hr{animation:none}}
+.wreck{width:12px;height:12px;border-radius:50%;background:rgba(40,40,40,.85);border:2px solid #fff;box-shadow:0 0 0 3px rgba(0,0,0,.25)}
+/* the owner 10-26: the reverse (R) button is smaller than play; still a usable target (36 px on a touch screen) */
+#aRev{flex:0 0 auto!important;width:30px!important;align-self:center!important;margin-inline:auto!important;min-width:28px!important;height:26px!important;font-size:11px!important;padding:0 5px!important}@media (pointer:coarse){#aRev{min-width:36px!important;height:34px!important}}
+.tml{color:inherit;text-decoration:underline dotted;text-underline-offset:3px}.tml:hover,.tml:focus-visible{text-decoration:underline;color:var(--ac)}
+/* OPENING SCREEN (the owner 10-26: "at the start of a war show the map, then the war name, the dates and the casualties of all sides; no animation until the user presses a button or touches the screen, then play WITH sound"): D.intro only; a deep link (#t=, ?still=, ?intro=0) skips it. */
+#intro{position:absolute;inset:0;z-index:1500;display:none;align-items:center;justify-content:center;padding:14px;background:rgba(14,18,26,.42);color:#fff;cursor:pointer;transition:opacity .6s;text-align:center}
+body.intro #intro{display:flex}body.intro-out #intro{opacity:0;pointer-events:none}body.intro #rot,body.intro .sndtoast{display:none!important}
+#intro .nbox{max-width:620px;width:100%;background:rgba(14,18,26,.86);border:1px solid rgba(255,255,255,.18);border-radius:16px;padding:22px 20px 18px;box-shadow:0 8px 40px rgba(0,0,0,.5);max-height:94%;overflow:auto}
+#intro .nt{font-size:clamp(26px,6.5vw,46px);font-weight:800;line-height:1.15;opacity:0;transition:opacity 2.2s ease-in}
+#intro .nd{font-size:clamp(15px,3.6vw,22px);margin-top:6px;opacity:0;transition:opacity 1.2s}
+#intro .nc{display:flex;gap:18px;margin-top:14px;justify-content:center;flex-wrap:wrap}
+#intro .nb{flex:1 1 220px;opacity:0;transition:opacity 1.2s;text-align:center}#intro .nb h3{margin:0 0 4px;font-size:15px;font-weight:700}#intro .nb.il h3{color:#6fb1ff}#intro .nb.ar h3{color:#ff7b72}
+#intro .nb p{margin:3px 0;font-size:clamp(13px,3.2vw,16px);line-height:1.4}
+#intro .ns{margin-top:12px;font-size:12px;opacity:0;transition:opacity 1s;color:#cfd6e4}#intro .ns a{color:#cfd6e4}
+#intro .ngo{margin-top:14px;font:inherit;font-weight:700;font-size:18px;padding:10px 34px;border-radius:26px;border:0;background:var(--ac,#1d5ea8);color:#fff;cursor:pointer;opacity:0;transition:opacity 1s}
+#intro .nh{margin-top:8px;font-size:13px;opacity:0;transition:opacity 1s;color:#cfd6e4}
+#intro .on{opacity:1}
+@media (prefers-reduced-motion:reduce){#intro .nt,#intro .nd,#intro .nb,#intro .ns,#intro .ngo,#intro .nh{transition:none}}
+#rot{position:absolute;z-index:1300;inset-inline:12px;top:110px;background:var(--card);border:2px solid var(--ac);border-radius:14px;padding:12px;display:none;flex-direction:column;gap:8px;text-align:center;font-weight:600}
+#rot.on{display:flex}#rot button{font:inherit;min-height:42px;border-radius:10px;border:1px solid var(--bd);background:var(--card);color:var(--fg);cursor:pointer}#rot button.pri{background:var(--ac);color:#fff;border-color:var(--ac)}
+@media (min-width:900px) and (min-height:521px),(orientation:landscape) and (max-height:520px){
+ .animui{display:contents}
+ body.anim .top{inset-inline-start:calc(var(--panelW) + 8px)}
+ body.anim #map{inset-inline-start:var(--panelW)}
+ .infop{position:absolute;z-index:1150;inset-inline-start:0;top:0;bottom:var(--bar);width:var(--panelW);background:var(--card);border-inline-end:1px solid var(--bd);padding:10px 12px;gap:8px;overflow:auto}
+ .infop .cap{max-height:none;border:0;padding:4px 2px;font-size:15px;flex:1}.infop .banner{align-self:stretch}
+ .hud{position:static;border:0;padding:0;flex-direction:row;gap:12px;align-items:baseline;background:none}
+ .pcol{display:block;position:absolute;inset-inline-end:-36px;top:60px;width:34px;height:44px;min-width:0;background:var(--card);border:1px solid var(--bd);border-radius:0 10px 10px 0;cursor:pointer;z-index:1200;pointer-events:auto}[dir=rtl] .pcol{border-radius:10px 0 0 10px}
+ body.pcol{--panelW:0px}body.pcol .infop{width:0;padding:0;border:0;overflow:visible}body.pcol .infop>*:not(.pcol){display:none}
+ .rail{display:flex;flex-direction:column;gap:8px;position:absolute;z-index:1150;inset-inline-end:8px;top:56px;pointer-events:none}.g1,.g2{flex-direction:column;pointer-events:auto;padding:4px}
+ .g1 button,.g2 button{flex:none;width:40px;height:36px}.g1 .sp{width:40px;min-width:0}
+ .scrub{position:absolute;z-index:1150;bottom:calc(var(--bar) + 8px);inset-inline-start:calc(var(--panelW) + 8px);inset-inline-end:96px}
+}
+@media (min-width:900px) and (max-height:760px) and (min-height:521px){.g1,.g2{display:grid;grid-template-columns:repeat(2,40px)}.g1 .sp{grid-column:1/-1}}
+@media (orientation:landscape) and (max-height:520px){
+ :root{--panelW:27vw;--bar:28px}
+ .top{top:4px;gap:4px}.ttl{padding:2px 8px;font-size:13px}.ttl small{display:none}.btn{min-height:30px;font-size:12px;padding:0 8px}
+ .infop{padding:6px 8px;gap:4px}.infop .banner{font-size:10.5px;padding:2px 6px}.infop .cap{font-size:12px;line-height:1.4}.hud b{font-size:14px}.hud{font-size:11px}
+ /* ONE bottom line: every control in a single row under the map (the owner: controls at the bottom, fit one line, narrow explanation) */
+ .animui{display:flex;position:absolute;z-index:1150;bottom:calc(var(--bar) + 4px);inset-inline-start:calc(var(--panelW) + 4px);inset-inline-end:4px;gap:3px;align-items:center;pointer-events:none}
+ .infop{position:fixed;top:0;bottom:var(--bar);inset-inline-start:0}.pcol{position:fixed}
+ .rail{display:contents;position:static}.g1,.g2{display:flex!important;flex-direction:row;padding:2px;gap:2px;grid-template-columns:none;pointer-events:auto}
+ .g1 button,.g2 button,.scrub button{flex:none;width:26px;min-width:0;height:28px;font-size:11px;padding:0}.g1 .sp{grid-column:auto;width:auto;min-width:1.7em;font-size:11px}
+ .scrub{position:static;flex:1 1 60px;min-width:60px;padding:2px;inset:auto;pointer-events:auto}.animui input{height:28px}
+ .leaflet-bottom.leaflet-left .leaflet-control-scale{display:none}.leaflet-top.leaflet-left{margin-top:40px}.leaflet-top.leaflet-left .leaflet-control-zoom a{width:26px;height:26px;line-height:26px}
+ .bar{font-size:11px}.bar button{min-height:22px}
+}
+@media (orientation:portrait) and (max-width:899px){
+ :root{--bar:26px}.bar{font-size:11px}.bar button{min-height:22px;font-size:11px;padding:0 6px}
+ .animui{gap:3px;bottom:calc(var(--bar) + 3px)}.animui button{height:30px;font-size:12px;min-width:24px;padding:0 1px}.animui input{height:30px}
+ .g1,.g2,.scrub{padding:2px;gap:2px;border-radius:10px}.sp{font-size:12px;min-width:2em}
+ .cap{max-height:17dvh;font-size:13px;line-height:1.45;padding:4px 8px}.banner{font-size:11px;padding:1px 8px}
+ .hud{top:92px}.hud b{font-size:15px}.leaflet-top.leaflet-right{margin-top:128px}
+}
+body.still .top,body.still .animui,body.still .hud,body.still .infop,body.still .bar,body.still #rot,body.still .leaflet-control-zoom,body.still .leaflet-control-scale{display:none!important}
+body.still #map{inset:0!important}.stillcap{display:none}body.still .stillcap{display:block;position:absolute;z-index:1300;inset-inline:0;bottom:0;background:rgba(255,243,205,.96);color:#5c4400;font-weight:700;font-size:13px;text-align:center;padding:4px 8px}
+.chips{display:flex;gap:6px;flex-wrap:wrap}.chips[hidden]{display:none}.chips .btn{min-height:36px}.card.hid{display:none}
+#aMap,#aPlay2,#aMapOff,#aSndM,#bMenu{display:none}
+@media (max-width:899px),(orientation:landscape) and (max-height:520px){#aMap{display:inline-flex;align-items:center;justify-content:center}}
+body.maponly #aPlay2{display:inline-flex!important;align-items:center;justify-content:center}
+body.maponly #aSndM{display:flex;position:absolute;z-index:1300;top:8px;inset-inline-end:76px;font:inherit;font-size:16px;border:1px solid var(--bd);background:var(--card);color:var(--fg);border-radius:10px;min-height:38px;min-width:42px;justify-content:center;cursor:pointer;align-items:center}
+body.maponly #aMapOff{display:flex;position:absolute;z-index:1300;top:8px;inset-inline-end:8px;font:inherit;font-size:13px;border:1px solid var(--bd);background:var(--card);color:var(--fg);border-radius:10px;min-height:38px;padding:0 10px;cursor:pointer;align-items:center}
+
+.casp{background:var(--card);border:1px solid var(--bd);border-radius:12px;padding:4px 10px;font-size:13px;line-height:1.45;max-height:30dvh;overflow:auto}.casp[hidden]{display:none}.casp summary{cursor:pointer;font-weight:700;min-height:28px;display:flex;align-items:center}
+.casp .cph{font-weight:700;margin-top:6px;border-bottom:1px solid var(--bd);font-size:12.5px}.casp .cl{margin:3px 0}.casp .cl .tm{font-size:11px;font-weight:700;color:var(--ac)}.casp small{display:block;color:var(--mu);font-size:11.5px}.casp .cfoot{margin-top:6px}
+.casp .none{color:var(--mu)}.cas-in{margin-top:4px;padding:4px 6px;background:var(--bg,#f6f3ec);border-radius:8px;font-size:12.5px;line-height:1.45}.cas-in a{color:var(--ac)}
+.sndtoast{position:fixed;left:50%;transform:translateX(-50%);bottom:74px;z-index:1200;background:rgba(30,30,30,.92);color:#fff;border-radius:18px;padding:7px 14px;font-size:13px;max-width:88vw;text-align:center;pointer-events:none;box-shadow:0 2px 8px rgba(0,0,0,.35)}.sndtoast[hidden]{display:none}
+.cbadge{display:flex;align-items:center;justify-content:center;width:26px;height:26px;background:#fff;color:#333;border:2px solid #555;border-radius:50%;box-shadow:0 1px 4px rgba(0,0,0,.35);cursor:pointer}
+@media (max-width:899px),(orientation:landscape) and (max-height:520px){
+ #bMenu{display:flex;position:absolute;z-index:1300;top:8px;inset-inline-start:8px;min-width:44px;min-height:44px;justify-content:center;align-items:center;font-size:18px;padding:0}
+ .top{display:none}
+ body.menu-open .top{display:flex;position:fixed;z-index:1400;top:60px;inset-inline:8px;flex-direction:column;align-items:stretch;background:var(--card);border:1px solid var(--bd);border-radius:12px;padding:10px;max-height:calc(100dvh - 150px);overflow:auto;pointer-events:auto}
+ body.menu-open .top .chips{display:flex}body.menu-open .top .btn{min-height:44px}
+ body.maponly #bMenu{display:none}
+ body:not(.maponly) .hud{inset-inline-start:60px}
+}
+body.maponly .top,body.maponly .infop,body.maponly .hud,body.maponly .g1,body.maponly .g2{display:none!important}
+body.maponly #map{inset:0 0 var(--bar) 0!important}
+body.maponly .animui{inset-inline:8px!important}
+body.maponly .scrub{grid-column:1/-1!important;flex:1 1 auto}
+body.maponly .leaflet-top.leaflet-right{margin-top:56px!important}body.maponly .leaflet-top.leaflet-left{margin-top:8px!important}
+@media (orientation:portrait) and (max-width:899px){
+ .infop .g2{display:flex;grid-column:auto;align-self:stretch;pointer-events:auto}.infop .g2 button{flex:1 1 0;height:30px}
+ body.g2up .scrub{grid-column:1/-1}
+}
+
+/* whole-war progress bar painted by the sun (the owner 10-22) */
+.sunwrap{position:relative;flex:1 1 auto;min-width:0;margin-top:13px;display:flex}.sunwrap input.sunr{flex:1 1 auto;min-width:0;-webkit-appearance:none;appearance:none;height:14px;border-radius:7px;border:1px solid var(--bd);padding:0;margin:0;cursor:pointer}
+input.sunr::-webkit-slider-runnable-track{background:transparent;height:14px}input.sunr::-moz-range-track{background:transparent;height:14px}
+input.sunr::-webkit-slider-thumb{-webkit-appearance:none;width:8px;height:22px;margin-top:-4px;border-radius:3px;background:#fff;border:2px solid #222;box-shadow:0 0 0 1px #fff}input.sunr::-moz-range-thumb{width:5px;height:20px;border-radius:3px;background:#fff;border:2px solid #222}
+.sunmarks{position:absolute;inset:0;pointer-events:none;direction:ltr}.sunmarks i{position:absolute;top:0;height:14px;border-left:1px solid rgba(255,255,255,.9);font-style:normal}
+.sunmarks i.dk{border-left:2px solid #fff;height:14px}.sunmarks i.dk b{position:absolute;top:-14px;left:2px;font-size:11px;line-height:12px;color:var(--ink,#222);white-space:nowrap}.sunmarks i.dk small{display:none;position:absolute;top:-13px;left:14px;font-size:9px;line-height:12px;color:var(--ink2,#555);white-space:nowrap}
+.sunmarks i.ck{border-left:3px solid #222;height:14px;top:0}.sunmarks i.ck b{position:absolute;top:15px;left:3px;font-size:10px;line-height:11px;color:var(--ink,#222);white-space:nowrap;background:var(--card,rgba(255,255,255,.8));padding:0 2px;border-radius:3px}
+.sunmarks i.hk{height:7px;top:7px;border-left:1px solid rgba(0,0,0,.45)}.sunmarks i.hk small{display:none}
+@media (max-width:699px){.sunmarks i.ck b{display:none}}
+@media (min-width:700px){.sunmarks i.dk small{display:inline}.sunmarks i.hk small{display:inline;position:absolute;top:8px;left:2px;font-size:8px;color:rgba(0,0,0,.6)}}
+</style>
+<!-- Google tag: the same block every published page carries (tools/ga_inject.py) - war pages are published by tools/war_publish.sh, not through the stage, so the template carries it (the owner 2026-10-25, "GA and Grafana on all the war pages"). ga-guard keeps staging/LAN views out. -->
+<script src="/src/ga-guard.js"></script>
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-HMYNE9NT2K"></script>
+<script>
+try { if (localStorage.getItem('yeelaIsManager') === 'true') window['ga-disable-G-HMYNE9NT2K'] = true; } catch (e) {}
+window.dataLayer = window.dataLayer || [];
+function gtag(){dataLayer.push(arguments);}
+gtag('js', new Date());
+gtag('config', 'G-HMYNE9NT2K');
+</script>
+<script type="module">import("/src/eventlog.js").catch(() => {});</script><!-- event log (page views, time on page): every page carries it, tools/verify_event_loader.py fails the build without it (the owner 2026-10-06) -->
+</head>
+<body>
+<div id="app">
+ <div class="stillcap">אנימציה סכמטית - בסיסים ומסלולים אינם מדויקים · מקור: ויקיפדיה העברית, CC BY-SA 4.0</div>
+ <div id="map" role="application" aria-label="מפת האירועים"></div>
+ <button class="btn" id="bMenu" aria-expanded="false" aria-controls="topMenu" title="תפריט: אזורים, אירועים, מקרא" aria-label="תפריט: אזורים, אירועים, מקרא">☰</button>
+ <div class="top" id="topMenu">
+  <div class="ttl">__H1__<small class="ctx">__CTX__</small></div>
+  <button class="btn" id="bJump" hidden>טקסט ומקורות ↓</button>
+  <span class="chips" id="areaChips" hidden></span>
+  <button class="btn" id="bCards" aria-pressed="false">אירועים (11)</button>
+  <button class="btn" id="bLeg" aria-pressed="false">מקרא</button>
+  <button class="btn" id="bTime" aria-pressed="false">הצג לפי זמן</button>
+  <button class="btn" id="bAnim" aria-pressed="true">תצוגה סטטית</button>
+ </div>
+ <div class="tk"><span>06:00</span><span>10:00</span><span>13:32</span><span>15:25</span><span>16:16</span><span>18:00</span></div>
+ <div class="tl"><button id="play" aria-label="הפעלה">▶</button><input id="t" dir="ltr" type="range" min="360" max="1080" step="5" value="1080" aria-label="שעה"><span id="clock">18:00</span></div>
+ <div class="panel sheet" id="pCards"><h2><span id="cardsTitle">אירועי היום, מצוטטים מהערך</span><button id="xCards" aria-label="סגירה">✕</button></h2><div class="cards" id="cards" aria-live="polite"></div></div>
+ <div class="panel legend" id="pLeg"><b>מקרא</b>
+   <span class="lg"><span class="sw dot"></span> ◉ מקום מדויק (נקודת היישוב או העיר בוויקיפדיה)</span>
+   <span class="lg"><span class="sw"></span> מסלול סכמטי, לא מסלול מדויק</span>
+   <span class="lg"><span class="ic iaf" style="width:18px;height:18px;font-size:10px">✈</span> חיל האוויר &nbsp; <span class="ic syr" style="width:18px;height:18px;font-size:10px">✈</span> מיג 21 סורי &nbsp; <span class="ic gnd" style="width:18px;height:18px;font-size:10px">💥</span> הפגזה &nbsp; <span class="qdot" style="display:inline-block;vertical-align:middle"></span> הפלה / פגיעה בלי כוח מצוין</span>
+   <span class="lg"><span class="shl" style="display:inline-block;vertical-align:middle;margin-inline-end:8px"></span> פגז או מרגמה בקשת בליסטית (קו מנוקד אדום; הקשת והמיקום סכמטיים, נקודת הפגיעה רק היכן שהמקור מציין מקום)</span>
+   <span class="lg"><b>══</b> סימני זחל = שריון · <b>· ·</b> עקבות מגפיים = חי"ר (משורטטים לאורך המסלול הסכמטי, נשארים עד סוף האנימציה)</span>
+   <span class="lg"><span class="shot" style="display:inline-block;vertical-align:middle;margin-inline-end:8px"></span> סימון כוח בתנועה (ריבוע חלול)</span>
+   <span class="lg"><b>לחיצה על כל סימן במפה</b> (נקודה, ריבוע חלול, עיגול "בסיס", סמל כוח או מטוס, תווית) פותחת הסבר קצר: מה זה, ואם הוא מדויק או סכמטי. תווית לבנה = שם המקום או הכוח שליד הסימן.</span>
+   <span class="lg">💬 הכפתור "הצג כוחות / בועות" מסתיר או מציג את התוויות והבועות סביב הכוחות (נשמר לכל מבקר).</span>
+   <span class="lg"><b>רק מה שכתוב בערך:</b> אירוע שהערך לא מציין לו מקום אינו מסומן במפה (הוא כתוב בכרטיס ביומן), ומה שמצויר סכמטי מסומן כסכמטי.</span></div>
+ <div class="animui" id="animui" hidden>
+  <div class="infop" id="infop">
+   <button class="pcol" id="pCol" title="הסתרה / הצגה של לוח ההסבר" aria-label="הסתרה / הצגה של לוח ההסבר">⟩</button>
+   <div class="banner">אנימציה סכמטית - בסיסים ומסלולים אינם מדויקים</div>
+   <div class="hud" id="hud" hidden><b id="clk">עם שחר</b><span id="tally">מיג 21 שהופלו: 0 מתוך 6</span><span id="dest" hidden></span><span id="sndHint" class="hint">הקישו להפעלת סאונד</span></div>
+   <button class="logback" id="logBack" hidden>חזרה לאירוע הנוכחי</button>
+   <div class="cap" id="cap" aria-live="polite"></div>
+   <details class="casp" id="casP" hidden><summary>נפגעים (לפי הנתונים שנמסרו)</summary>
+    <div class="cph" id="casILh"></div><div id="casIL"></div><div class="cph" id="casARh"></div><div id="casAR"></div>
+    <small class="cfoot">הנתונים חלקיים. „לא צוין” אינו אפס. טענות מיוחסות וטווחים אינם מסוכמים. ישראל: מקורות בעברית; הצד השני: אנגלית וערבית.</small></details>
+  </div>
+  <div class="rail">
+   <div class="g1">
+    <button id="aPrev" title="האירוע הקודם ([)" aria-label="האירוע הקודם">⏮</button><button id="aB10" title="10 שניות אחורה (חץ ימינה)" aria-label="10 שניות אחורה">−10</button><button id="aRev" title="הפעלה לאחור (R)" aria-label="הפעלה לאחור">◀</button><button id="aPlay" title="הפעלה / השהיה (רווח)" aria-label="הפעלה / השהיה">❚❚</button><button id="aF10" title="10 שניות קדימה (חץ שמאלה)" aria-label="10 שניות קדימה">+10</button><button id="aNext" title="האירוע הבא (])" aria-label="האירוע הבא">⏭</button>
+    <button id="aSlow" title="האטה (−)" aria-label="האטה">−</button><span id="aSp" class="sp" title="מהירות">1×</span><button id="aFast" title="האצה (+)" aria-label="האצה">+</button>
+   </div>
+   <div class="g2">
+    <button id="aFollow" aria-pressed="true" title="מצלמה עוקבת אחרי האירוע" aria-label="מצלמה עוקבת">🎯</button><button id="aReset" title="איפוס תצוגה" aria-label="איפוס תצוגה">⤢</button><button id="aMap" aria-pressed="false" title="מפה בלבד" aria-label="מפה בלבד">🗺</button><button id="aBub" aria-pressed="true" title="הצג כוחות / בועות (התוויות סביב הכוחות)" aria-label="הצג כוחות ובועות">💬</button><button id="aSnd" aria-pressed="false" title="סאונד" aria-label="סאונד">🔇</button>
+   </div>
+  </div>
+  <div class="scrub"><button id="aPlay2" title="הפעלה / השהיה" aria-label="הפעלה / השהיה">❚❚</button><button id="aRe" title="מההתחלה" aria-label="מההתחלה">↺</button><input id="aT" dir="ltr" type="range" min="0" max="1240" step="1" value="0" aria-label="התקדמות האנימציה" title="התקדמות האנימציה"></div>
+ </div>
+ <button id="aMapOff" title="חזרה לתצוגה המלאה" aria-label="חזרה לתצוגה המלאה">🗺 ✕</button><button id="aSndM" title="סאונד" aria-label="סאונד" aria-pressed="false">🔇</button>
+ <div id="evn" hidden></div>
+ <div id="intro" hidden role="dialog" aria-label="פתיחה"><div class="nbox"><div class="nt" id="iT"></div><div class="nd" id="iD"></div><div class="nc" id="iC"></div><div class="ns" id="iS"></div><button class="ngo" id="iGo" type="button">התחל ▶</button><div class="nh" id="iH">או גע/י בכל מקום במסך (כולל צליל)</div></div></div>
+ <div id="rot"><span>סובבו את המכשיר לרוחב לתצוגה טובה יותר</span><button class="pri" id="rotFs">מסך מלא ולרוחב</button><button id="rotNo">המשך כך</button></div>
+ <div class="panel credit" id="pCredit">__CREDIT__</div>
+ <div class="bar"><span>מקור: <a href="https://he.wikipedia.org/wiki/%D7%99%D7%95%D7%9D_%D7%94%D7%A7%D7%A8%D7%91%D7%95%D7%AA_%D7%A9%D7%9C_7_%D7%91%D7%90%D7%A4%D7%A8%D7%99%D7%9C_1967" rel="noopener">ויקיפדיה העברית</a> · CC BY-SA 4.0</span><button id="bCredit" aria-pressed="false">מקור ורישיון</button></div>
+</div>
+<script>
+(function(){
+var STILL=/[?&]still=/.test(location.search),MODE='__MODE__',D=null,map,layers={},cur=-1,timer=0,timed=false,IC={bomber:['iaf','✈'],mirage:['iaf','✈'],mig:['syr','✈'],tank:['gnd','▣'],artillery:['gnd','💥'],tractor:['civ','🚜'],summary:['gnd','Σ']};
+var $=function(i){return document.getElementById(i)};
+function hhmm(m){var h=Math.floor(m/60),mm=m%60;return (h<10?'0':'')+h+':'+(mm<10?'0':'')+mm}
+function esc(s){return String(s).replace(/[&<>"]/g,function(c){return{'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]})}
+function icon(cls,sym,dim){return L.divIcon({className:dim?'dim':'',html:'<span class="ic '+cls+'">'+sym+'</span>',iconSize:[28,28],iconAnchor:[14,14]})}
+fetch('__EVENTS_URL__').then(function(r){return r.json()}).then(function(d){D=d;init()}).catch(function(e){console.error(e);$('cards').textContent='הנתונים לא נטענו'});
+function init(){
+  map=L.map('map',{zoomControl:false,scrollWheelZoom:false,zoomSnap:.1,zoomDelta:1,wheelPxPerZoomLevel:240,wheelDebounceTime:40}); /* the owner 2026-10-19: wheel zoom was one whole level per notch (and a trackpad batch of tiny deltas also jumped a whole level, because Leaflet rounds each wheel batch UP to zoomSnap). Now a notch is about a quarter to a third of a level; the +/- buttons still step one level. */A.zc=L.control.zoom({position:'bottomleft'}).addTo(map);
+  L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:15,attribution:'© OpenStreetMap'}).addTo(map);
+  map.fitBounds([[32.62,35.4],[33.62,36.5]],{paddingTopLeft:[10,110],paddingBottomRight:[10,20]});
+  D.events.forEach(function(e,i){layers[e.id]=L.layerGroup();build(e)});
+  buildCards(); setTimed(false);
+  if(window.parent!==window){$('bJump').hidden=false;$('bJump').addEventListener('click',function(){try{parent.postMessage({warScroll:'text'},'*')}catch(e){}})}
+  if(MODE==='anim'&&D.scene){buildChips();initScene();loadDayNight()}else if(MODE==='anim')initAnim();else initStatic();
+  document.querySelectorAll('#bCards,#bLeg,#bCredit').forEach(function(b){b.addEventListener('click',function(){var m={bCards:'pCards',bLeg:'pLeg',bCredit:'pCredit'}[b.id];toggle(m,b)})});
+  $('xCards').addEventListener('click',function(){toggle('pCards',$('bCards'))});
+  $('bTime').addEventListener('click',function(){setTimed(!timed)});
+  setTimeout(function(){map.invalidateSize()},50);
+  $('t').addEventListener('input',function(){stop();timed=true;render(+this.value)});
+  $('play').addEventListener('click',function(){timer?stop():play()});
+}
+/* Day/night mockup (the owner 10-21, LAN only): loaded only with ?daynight=1, so a page without it is unchanged. war/daynight.js: sun position, tint, night theme, flashes, shadows. */
+function loadDayNight(){if((!/[?&]daynight=1/.test(location.search)&&!D.whole)||!D.scene)return;var s=document.createElement('script');s.src='../daynight.js';s.onload=function(){var v=D.scene.view0,la=(v[0][0]+v[1][0])/2,lo=(v[0][1]+v[1][1])/2;window.GoinfoDayNight.init({whole:!!D.whole,map:map,date:'__DATE__',lat:la,lon:lo,tz:2,tzName:('__DATE__'.slice(0,4)==='1967'?'שעון ישראל, UTC+2 (ללא שעון קיץ ב-1967)':'UTC+2 (הנחה שלנו; לא נבדק אם חל אז שעון קיץ)'),place:'מרכז תצוגת הסצנה ('+la.toFixed(2)+'°N, '+lo.toFixed(2)+'°E)',getMin:function(){try{return simMin(A.T)}catch(e){return null}},markers:function(){return A.E&&A.E.s}});if(D.whole)sunBar(la,lo);renderA()};document.head.appendChild(s)}
+/* the owner 10-22 (whole-war test page): the progress bar is painted by the SUN (night blue, dawn/dusk orange, day yellow) from the real sun elevation at the scene's centre on each simulated date, with numbered day marks (1..6) and 6-hour ticks. A pure function of the simulated minute; D.whole only. */
+function sunBar(la,lo){var W=D.whole,G=window.GoinfoDayNight&&window.GoinfoDayNight.sun,inp=$('aT');if(!W||!G||!inp||inp.dataset.sun)return;inp.dataset.sun='1';
+ var N=480,dur=A.DUR,mins=[],stops=[],i;function lerp(a,b,f){return a.map(function(x,j){return Math.round(x+(b[j]-x)*f)})}
+ var NIGHT=[10,22,64],TW=[92,70,150],ORG=[240,138,60],YEL=[255,213,74],HI=[255,240,150];
+ function col(e,am){var c;if(e<-12)c=NIGHT;else if(e<-6)c=lerp(NIGHT,TW,(e+12)/6);else if(e<0)c=lerp(TW,ORG,(e+6)/6);else if(e<8)c=lerp(ORG,YEL,e/8);else c=lerp(YEL,HI,Math.min(1,(e-8)/40));return 'rgb('+c.join(',')+')'}
+ for(i=0;i<=N;i++){var T=dur*i/N,m=simMin(T),k=Math.floor(m/1440),e=G.sunAt(G.addDays(W.date0,k),m-1440*k,la,lo,2).elev;mins.push(m);stops.push(col(e)+' '+(i/N*100).toFixed(2)+'%')}
+ inp.style.background='linear-gradient(to right,'+stops.join(',')+')';inp.classList.add('sunr');
+ var wrap=document.createElement('div');wrap.className='sunwrap';inp.parentNode.insertBefore(wrap,inp);wrap.appendChild(inp);
+ var mk=document.createElement('div');mk.className='sunmarks';mk.setAttribute('aria-hidden','true');
+ function pct(T){return (T/dur*100).toFixed(2)+'%'}
+ function tOf(M){for(var j=1;j<=N;j++)if(mins[j]>=M){var f=(M-mins[j-1])/Math.max(1e-6,mins[j]-mins[j-1]);return dur*(j-1+f)/N}return null}
+ var many=W.days.length>10;W.days.forEach(function(d){var t=document.createElement('i');t.className='dk';t.style.left=pct(d.T0);t.innerHTML=(many&&d.n%5!==1&&d.n!==W.days.length?'':'<b>'+d.n+'</b><small>'+d.label+'</small>');mk.appendChild(t);
+  [360,720,1080].forEach(function(h){if(many&&h!==720)return;var T=tOf(d.min0+h);if(T===null||T<d.T0||T>d.T0+d.dur)return;var u=document.createElement('i');u.className='hk';u.style.left=pct(T);u.innerHTML='<small>'+(h/60)+'</small>';mk.appendChild(u)})});
+ (W.chapters||[]).forEach(function(c){var t=document.createElement('i');t.className='ck';t.style.left=pct(c.T0);t.innerHTML='<b>'+c.name+'</b>';t.title=c.sub||'';mk.appendChild(t)});
+ wrap.appendChild(mk);inp.title='התקדמות: צבע הפס = גובה השמש (לילה כחול, שחר ושקיעה כתום, יום צהוב); המספרים = ימי המלחמה 1-6, הקווים הקטנים = 06:00, 12:00, 18:00'}
+function toggle(id,btn){var p=$(id),on=!p.classList.contains('open');['pCards','pLeg','pCredit'].forEach(function(x){$(x).classList.remove('open')});['bCards','bLeg','bCredit'].forEach(function(x){$(x).setAttribute('aria-pressed','false')});
+  if(on){p.classList.add('open');btn.setAttribute('aria-pressed','true')}document.body.classList.toggle('sheet-open',on&&id==='pCards');setTimeout(function(){map.invalidateSize()},50)}
+function setTimed(on){timed=on;document.body.classList.toggle('timed',on);$('bTime').setAttribute('aria-pressed',String(on));stop();if(!on)$('t').value=$('t').max;render(+$('t').value)}
+var SEL='all',fromHash=((location.hash||'').slice(1).indexOf('=')<0?(location.hash||'').slice(1):'')||((/[?&]area=([a-z]+)/.exec(location.search)||[])[1]);
+function areaF(e){return (SEL==='all'||!e.area||e.area===SEL)?1:.18}
+function focusArea(id,fromOut){if(!D.views||!D.views[id])id='all';SEL=id;
+  [].forEach.call(document.querySelectorAll('#areaChips .btn'),function(b){b.setAttribute('aria-pressed',String(b.dataset.a===id))});
+  [].forEach.call(document.querySelectorAll('.card'),function(c){var e=D.events[+c.dataset.i];c.classList.toggle('hid',!(id==='all'||!e.area||e.area===id))});
+  if(A.scene&&A.on){renderA();if(id==='all'){setFollow(true);gotoAct(true)}else{setFollow(false);progView(D.views[id])}}
+  else{render(+$('t').value);map.flyToBounds(D.views[id],{padding:[24,24],duration:.9})}
+  if(!fromOut&&window.parent!==window){try{parent.postMessage({warArea:id},'*')}catch(e){}}}
+function buildChips(){if(!D.area_filter)return;var c=$('areaChips');c.hidden=false;c.innerHTML=D.area_filter.map(function(a){return '<button class="btn" type="button" data-a="'+a.id+'" aria-pressed="'+(a.id==='all')+'">'+esc(a.name)+'</button>'}).join('');
+  c.addEventListener('click',function(ev){var b=ev.target.closest('.btn');if(b)focusArea(b.dataset.a)});
+  addEventListener('message',function(ev){if(ev.data&&ev.data.warArea)focusArea(ev.data.warArea,true)})}
+function initStatic(){if(D.cards_title)$('cardsTitle').textContent=D.cards_title;$('bAnim').hidden=true;
+  if(D.time_range){var t=$('t');t.min=D.time_range[0];t.max=D.time_range[1];t.value=D.time_range[1];document.querySelector('.tk').style.display='none'}
+  [].forEach.call(document.querySelectorAll('#bCards,#bLeg,#bCredit'),function(b){b.addEventListener('click',function(){var m={bCards:'pCards',bLeg:'pLeg',bCredit:'pCredit'}[b.id];toggle(m,b)})});
+  $('bTime').addEventListener('click',function(){setTimed(!timed)});
+  buildChips();var v0=(D.views&&D.views[fromHash])?D.views[fromHash]:D.view;
+  if(v0)map.fitBounds(v0,{padding:[24,24],animate:false});
+  setTimeout(function(){map.invalidateSize();if(v0)map.fitBounds(v0,{padding:[24,24],animate:false});if(fromHash&&D.views&&D.views[fromHash])focusArea(fromHash,true)},80);
+  if(/[?&]still=/.test(location.search)){document.body.classList.add('still');setTimeout(function(){map.invalidateSize();var sa=(/[?&]area=([a-z]+)/.exec(location.search)||[])[1]||'all';SEL=sa;render(+$('t').value);map.fitBounds((D.still_views&&D.still_views[sa])||D.still_view||D.view,{padding:[24,24],animate:false})},120)}
+  else if(matchMedia('(min-width:900px)').matches)toggle('pCards',$('bCards'))}
+function pt(k){var p=D.places[k];return [p.lat,p.lon]}
+function build(e){var g=layers[e.id],u=IC[e.unit]||['gnd','•'];
+  e.geometry.forEach(function(x){
+    if(x.type==='marker'){var cl=u[0],sym=u[1];if(x.kind==='kill'){cl='kill';sym='';x._dot=1}else if(x.kind==='bomb'){cl='iaf';sym='✈'}
+      L.marker(pt(x.place),{icon:x._dot?L.divIcon({className:'',html:'<span class="qdot"></span>',iconSize:[10,10],iconAnchor:[5,5]}):icon(cl,sym)}).bindTooltip(esc(D.places[x.place].name)+(STILL?'':' · '+esc(x.note||'')),{className:'tt',permanent:STILL,direction:'right'}).addTo(g)}
+    if(x.type==='shelled'){L.marker(pt(x.place),{icon:icon('gnd','💥')}).bindTooltip(esc(x.label),{className:'tt'}).addTo(g)}
+  })}
+function buildCards(){var h='',bc0=$('bCards');if(bc0)bc0.textContent='אירועים ('+D.events.length+')';/* the button said 11 on every page */D.events.forEach(function(e,i){
+  var u=IC[e.unit]||['gnd','•'];
+  var pos=e.geometry.length?'<span class="badge '+(e.geometry.some(function(x){return x.type==='area'||x.type==='circle'||x.type==='track'})?'ap':'ex')+'">'+(e.geometry.some(function(x){return x.type==='area'||x.type==='circle'})?'מקום: אזור משוער':e.geometry.some(function(x){return x.type==='track'})?'מקום: נקודות מדויקות + קו סכמטי':'מקום: מדויק (נקודת היישוב/העיר)')+'</span>':'<span class="badge no">אין מקום בערך, אין סימון</span>';
+  var tp=e.time_precision==='none'?'':'<span class="badge '+(e.time_precision==='exact'?'ex':'ap')+'">'+(e.time_precision==='exact'?'שעה כתובה בערך':'שעה משוערת / לא מדויקת')+'</span>';
+  var np=(e.no_position&&e.no_position.length)?'<div class="np">בלי מקום בערך: '+esc(e.no_position.join('; '))+'</div>':'';
+  var nts='';e.geometry.forEach(function(x){if(x.note)nts+='<div class="nt">'+esc(x.note)+'</div>'});if(e.note)nts+='<div class="nt">'+esc(e.note)+'</div>';
+  h+='<div class="card" data-i="'+i+'" tabindex="0"><div class="tm"><span class="ic '+u[0]+'" style="width:20px;height:20px;font-size:11px;vertical-align:middle">'+u[1]+'</span> '+esc(e.time_label)+'</div><h3>'+(e.source_url?'<a class="tml" href="'+esc(e.source_url)+'" target="_blank" rel="noopener" title="'+(e.source_cur?'הקטע המתאים בנוסח הנוכחי של הערך (הכרטיס שלנו מסכם אותו; נפתח בלשונית חדשה)':'הקטע במקור (נפתח בלשונית חדשה)')+'">'+esc(e.title)+'</a>':esc(e.title))+'</h3><q>'+esc(e.quote)+'</q>'+(e.src?'<div class="nt">מקור: <a href="'+esc(e.src.u)+'" target="_blank" rel="noopener">'+esc(e.src.t)+'</a>'+(e.src.p?', עמ׳ '+esc(String(e.src.p))+' בקובץ ה-PDF':'')+'</div>':'')+'<div style="margin-top:6px">'+tp+pos+'</div>'+np+nts+'</div>'});
+  $('cards').innerHTML=h;
+  $('cards').addEventListener('click',function(ev){var c=ev.target.closest('.card');if(!c)return;stop();var e=D.events[+c.dataset.i];document.querySelectorAll('.card').forEach(function(x){x.classList.remove('sel')});c.classList.add('sel');if(timed){$('t').value=Math.max(360,Math.min(1080,e.start_min));render(+$('t').value)}fit(e);if(!matchMedia('(min-width:900px)').matches)toggle('pCards',$('bCards'))});
+}
+function fit(e){var pts=[];e.geometry.forEach(function(x){if(x.place)pts.push(pt(x.place));if(x.from){pts.push(pt(x.from));pts.push(pt(x.to))}if(x.area){var a=D.areas[x.area];if(a.bounds){pts.push(a.bounds[0]);pts.push(a.bounds[1])}else pts.push(a.center)}});
+  if(pts.length===1)map.setView(pts[0],11);else if(pts.length)map.fitBounds(pts,{padding:[40,40],maxZoom:11})}
+function render(t){$('clock').textContent=hhmm(t);var now=-1;
+  D.events.forEach(function(e,i){var g=layers[e.id];var started=!timed||t>=e.start_min,active=timed&&started&&t<=e.end_min;
+    if(started){if(!map.hasLayer(g))g.addTo(map);var af=areaF(e);g.eachLayer(function(l){var full=!timed||active;if(l.setOpacity)l.setOpacity((full?1:.4)*af);else if(l.setStyle)l.setStyle({opacity:(full?1:.35)*af,fillOpacity:(full?.2:.06)*af})})}
+    else if(map.hasLayer(g))map.removeLayer(g);
+    if(active)now=i});
+  if(timed&&now<0){D.events.forEach(function(e,i){if(t>=e.start_min)now=i})}
+  var cs=document.querySelectorAll('.card');cs.forEach(function(c,i){var e=D.events[i];c.classList.toggle('now',timed&&i===now);c.classList.toggle('past',timed&&t>=e.start_min&&i!==now)});
+  if(timed&&now!==cur){cur=now;var c=cs[now];if(c&&c.scrollIntoView&&$('pCards').classList.contains('open'))c.scrollIntoView({block:'nearest',behavior:'smooth'})}}
+function play(){if(!timed)setTimed(true);if(+$('t').value>=+$('t').max)$('t').value=$('t').min;$('play').textContent='❚❚';timer=setInterval(function(){var v=+$('t').value+5;if(v>+$('t').max){stop();return}$('t').value=v;render(v)},120)}
+function stop(){clearInterval(timer);timer=0;$('play').textContent='▶'}
+
+/* ===== THE WHOLE DAY as a SCHEMATIC animation. The article names no base, no route and (mostly) no aircraft count; only HaOn, Ein Gev, Gadot, Kuneitra, Damascus are real points. ===== */
+/* Performance (the owner 10-26, YK 'sticks' on the Port Said night card): a marker whose position did not change is not moved again. A held unit (order of battle, landed helicopter, a unit kept to the end of its chapter) was re-positioned with every frame - marker AND its permanent tooltip - and ~540 markers made every frame ~60 ms (4-5 fps at the busiest moments). Leaflet re-places markers itself on zoom/pan. */
+(function(){var o=L.Marker.prototype.setLatLng;L.Marker.prototype.setLatLng=function(ll){var n=L.latLng(ll),c=this._latlng;if(c&&n&&c.lat===n.lat&&c.lng===n.lng&&this._icon&&this._map)return this;return o.call(this,n)}})();
+var A={hd:{},on:false,T:0,playing:false,dir:1,sp:1,last:0,raf:0,DUR:124,follow:true,prog:false,S:1,cur:-1,muted:true,ctx:null,master:null,sfxT:0,E:{}};
+var SPEEDS=[.25,.5,1,2,4,8];
+var PLANE='<svg viewBox="0 0 24 24" width="30" height="30"><path d="M12 1 L14.2 9 L23 14 L23 16.5 L14 14 L13.4 20 L16 22 L16 23.5 L12 22.5 L8 23.5 L8 22 L10.6 20 L10 14 L1 16.5 L1 14 L9.8 9 Z" fill="CLR" stroke="#fff" stroke-width="1.3"/></svg>';
+function lerp(a,b,f){return a+(b-a)*f}function clamp(x,a,b){return Math.max(a,Math.min(b,x))}function ease(f){f=clamp(f,0,1);return f<.5?2*f*f:1-Math.pow(-2*f+2,2)/2}
+function fixedIcon(cls,txt,w){return L.divIcon({className:'',html:'<div class="'+cls+'">'+(txt||'')+'</div>',iconSize:[w,w],iconAnchor:[w/2,w/2]})}
+function planeIcon(clr){return L.divIcon({className:'',html:'<span class="ap"><span class="rot" style="display:block;width:30px;height:30px">'+PLANE.replace('CLR',clr)+'</span></span>',iconSize:[30,30],iconAnchor:[15,15]})}
+function pathPos(path,f){f=clamp(f,0,1);var segs=[],tot=0,i;for(i=0;i+1<path.length;i++){var l=Math.hypot((path[i+1][0]-path[i][0]),(path[i+1][1]-path[i][1])*0.84);segs.push(l);tot+=l}var d=f*tot;for(i=0;i<segs.length;i++){if(d<=segs[i]||i===segs.length-1){var g=segs[i]?d/segs[i]:0;g=clamp(g,0,1);var a=path[i],b=path[i+1];return {p:[lerp(a[0],b[0],g),lerp(a[1],b[1],g)],h:Math.atan2((b[1]-a[1])*0.84,(b[0]-a[0]))}}d-=segs[i]}return {p:path[path.length-1],h:0}}
+/* ground-unit trails (the owner 10-18): armour = caterpillar tracks (two parallel dashed lines), infantry = boot prints (two lines of alternating dots); a pure function of the clock, so reverse/scrub erase them exactly; drawn along the SCHEMATIC route */
+function offPts(pts,px){if(pts.length<2)return pts;var z=map.getZoom(),P=pts.map(function(p){return map.project(L.latLng(p[0],p[1]),z)}),o=[];for(var i=0;i<P.length;i++){var a=P[Math.max(0,i-1)],b=P[Math.min(P.length-1,i+1)],dx=b.x-a.x,dy=b.y-a.y,l=Math.hypot(dx,dy)||1,q=map.unproject(L.point(P[i].x-dy/l*px,P[i].y+dx/l*px),z);o.push([q.lat,q.lng])}return o}
+function ptsUpTo(path,f){var segs=[],tot=0,j;for(j=0;j+1<path.length;j++){var l=Math.hypot(path[j+1][0]-path[j][0],(path[j+1][1]-path[j][1])*.84);segs.push(l);tot+=l}var d=clamp(f,0,1)*tot,acc=0,pts=[path[0]];for(j=0;j<segs.length;j++){if(acc+segs[j]<=d+1e-9){pts.push(path[j+1]);acc+=segs[j]}else{var g=(d-acc)/segs[j];pts.push([lerp(path[j][0],path[j+1][0],g),lerp(path[j][1],path[j+1][1],g)]);break}}return pts}
+function trail(key,pts,kind,o){var E=A.E;if(!E.s[key]){var tank=kind==='tank',smk=kind==='smoke',st=tank?{color:'#1f1f1f',weight:1.8,dashArray:'6 2.5',opacity:0,interactive:false}:smk?{color:'#3a3a3a',weight:6,dashArray:'1 8',lineCap:'round',opacity:0,interactive:false}:{color:'#4a2e0f',weight:4.2,dashArray:'0.5 11',lineCap:'round',opacity:0,interactive:false};E.s[key]=[L.polyline([[0,0],[0,0]],st).addTo(E.g),L.polyline([[0,0],[0,0]],tank?st:Object.assign({},st,{dashOffset:'5'})).addTo(E.g)]}
+  var ls=E.s[key];if(!pts||pts.length<2||o<=0){ls[0].setStyle({opacity:0});ls[1].setStyle({opacity:0});return}var px=kind==='tank'?2.1:4.5;ls[0].setLatLngs(landClip(offPts(pts,px)));ls[1].setLatLngs(landClip(offPts(pts,-px)));ls[0].setStyle({opacity:o*CURAF});ls[1].setStyle({opacity:o*CURAF})}
+function legPts(legs,T){var pts=[];for(var k=0;k<legs.length;k++){var L3=legs[k];if(T<L3.t0)break;var q=ptsUpTo(L3.path,ease((T-L3.t0)/(L3.t1-L3.t0)));pts=pts.concat(pts.length?q.slice(1):q)}return pts}
+function shellArc(key,from,to,lift,f,on){var mid=[lerp(from[0],to[0],.5)+lift,lerp(from[1],to[1],.5)];var arc=spr(key+'a',function(){var pts=[];for(var i=0;i<=18;i++)pts.push(quad(from,mid,to,i/18));return L.polyline(pts,{color:'#e0301e',weight:2.6,dashArray:'3 5',lineCap:'round',opacity:0,interactive:false})});arc.setStyle({opacity:on?.9*CURAF:0});var m=dot(key,'shl',11);if(on){m.setLatLng(quad(from,mid,to,f));op(m,1)}else op(m,0);var mz=dot(key+'z','muz',18);if(on&&f<.16){mz.setLatLng(from);op(mz,1-f/.16)}else op(mz,0)}   /* the fire burst at the gun (the owner 10-22): 18 px for 0.16 of the period, clearly smaller than the 46 px hit burst at the target */
+function quad(a,m,b,f){var u=1-f;return [u*u*a[0]+2*u*f*m[0]+f*f*b[0],u*u*a[1]+2*u*f*m[1]+f*f*b[1]]}
+/* lazily created sprites, one per key */
+function spr(key,make){var E=A.E;if(!E.s[key]){E.s[key]=make().addTo(E.g)}return E.s[key]}
+/* destroyed aircraft (the owner 10-22): a record that says aircraft were destroyed gets (a) PARKED planes at the named place before the hit (when the record says they were on the ground), (b) a wreck marker (broken plane, fire, smoke) from the hit to the end of the day, drawn up to 4 at a time with the x-N rule (N = round(n/4), min 2) and the real number in the tooltip, (c) a counter in the HUD. Positions are the record's own point; a region is drawn schematic and labelled so. */
+var WRK='<svg viewBox="0 0 28 28" aria-hidden="true"><g transform="rotate(-28 14 15)"><path d="M12 5 L13.8 11 L21 15 L21 17 L13.6 15.2 L13.2 20 L15.2 21.6 L15.2 22.6 L12 21.8 L8.8 22.6 L8.8 21.6 L10.8 20 L10.4 15.2 L3 17 L3 15 L10.2 11 Z" fill="#2b2b2b" stroke="CLR" stroke-width="1.6" stroke-linejoin="round"/><path d="M17.5 2 L20 6 L16.5 7 Z" fill="#2b2b2b" stroke="CLR" stroke-width="1.2" transform="translate(3 -1)"/></g><g class="sm"><circle cx="9" cy="8" r="3.6" fill="#555" opacity=".65"/><circle cx="14" cy="5" r="3" fill="#777" opacity=".55"/></g><g class="fire"><path d="M14 15 C10 15 9.5 20 12 22.5 C12 20.5 14 20 14 17.5 C15.5 19 16 21 15.5 22.5 C18.5 21 19 16.5 14 15 Z" fill="#ff8a1f" stroke="#ffd24a" stroke-width=".8"/></g></svg>';
+var PRK='<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 1 L14.2 9 L23 14 L23 16.5 L14 14 L13.4 20 L16 22 L16 23.5 L12 22.5 L8 23.5 L8 22 L10.6 20 L10 14 L1 16.5 L1 14 L9.8 9 Z" fill="CLR" fill-opacity=".72" stroke="#fff" stroke-width="1.2"/></svg>';
+/* the owner 10-22: a wreck (and its fire/smoke) stays WRECK_MIN simulated minutes after the hit, then fades over WRECK_FADE; a pure function of the clock, so scrub/reverse/reduced-motion stay exact. The 'destroyed so far' counter keeps the history. */
+var WRECK_MIN=180,WRECK_FADE=12;
+/* LAW (the owner 10-26): a card that names a battle with heavy losses shows the fight (both sides in contact at the place) AND a loss marker: item type 'loss' = {at,t,side,kind:'tank'|'ship'|'sam',n?,label,q,sk}: the dark, burning wreck of that kind with a side-coloured foot; a count badge ONLY when the source gives a number ("heavy" without a number draws no number). */
+var SINK_MIN=360;
+function lossM(key,it,T){var clr=it.side==='iaf'?'#1d5ea8':'#b3261e',kind=it.kind||'tank',n=it.n||0;
+  var m=spr(key,function(){var svg=kind==='ship'?ksvg('shp','#2b2b2b'):kind==='sam'?'<svg viewBox="0 0 30 30" aria-hidden="true"><rect x="6" y="9" width="18" height="14" rx="2" fill="#2b2b2b" stroke="#fff" stroke-width="1.2"/><path d="M15 3 L19 9 H11 Z" fill="#2b2b2b" stroke="#fff" stroke-width="1"/></svg>':TANK.replace(/CLR/g,'#2b2b2b');
+    var lw1='<span class="lw">'+svg+'<svg class="lf" viewBox="0 0 28 28" aria-hidden="true"><g class="sm"><circle cx="9" cy="8" r="3.6" fill="#555" opacity=".65"/><circle cx="14" cy="5" r="3" fill="#777" opacity=".55"/></g><g class="fire"><path d="M14 15 C10 15 9.5 20 12 22.5 C12 20.5 14 20 14 17.5 C15.5 19 16 21 15.5 22.5 C18.5 21 19 16.5 14 15 Z" fill="#ff8a1f" stroke="#ffd24a" stroke-width=".8"/></g></svg></span>',lwx=(it.lvl===2?lw1+lw1:lw1);var h='<div class="wk ls" style="border-bottom:3px solid '+clr+'">'+lwx+''+(n?'<span class="mult">×'+n+'</span>':'')+'</div>';
+    var w=(it.lvl===2?50:26)+(n?30:0),mk=L.marker(it.at,{icon:L.divIcon({className:'',html:h,iconSize:[w,30],iconAnchor:[w/2,24]}),interactive:true,opacity:0});mk.bindTooltip(it.label,{direction:'top',className:'tt',interactive:true});
+    popFor(mk,popHtml(it.label.replace(/\s*\(סכמטי[^)]*\)\s*$/,''),(it.lvl===2?'סימון אבדות כבדות מאוד (סכמטי): ':'סימון אבדות כבדות (סכמטי): ')+sideOf(clr)+'. '+(n?'המספר ('+n+') מהמקור. ':'המקור אינו נותן מספר, ולכן לא מצויר מספר. ')+'המקום מסומן בקירוב.',clockAt(it.t)));return mk});
+  var gone=1;if(kind==='ship'){var m0=simMin(it.t),mT=simMin(T);gone=(m0!=null&&mT!=null)?clamp((m0+SINK_MIN-mT)/12,0,1):1}   /* the owner 10-26: a sunk ship's wreck mark is removed 6 simulated hours after the sinking */
+  op(m,T>=it.t?Math.min(clamp((T-it.t)/.8,0,1),gone):0)}
+/* LAUNCHER (the owner 10-26: "something similar to this for shoulder missiles and Sagger, horizontal only"): our own flat side-view silhouette of a shoulder launcher (tube, rear flare, warhead, sight, grip), side-coloured, drawn at the firing point of every Sagger / RPG / Stinger-type arrow; it faces the way the missile flies (mirrored, never rotated). The missile itself stays a dot; a missile is never a soldier icon. */
+var LAUNCH=/סאגר|RPG|סטרלה|טילי? כתף|נ"ט כתפי/,LNSVG='<svg viewBox="0 0 42 18" width="30" height="13" aria-hidden="true"><path d="M3 6.5 H31 V10.5 H3 Z" fill="CLR" stroke="#fff" stroke-width="1.3" stroke-linejoin="round"/><path d="M3 5.5 L0.5 3.5 V13.5 L3 11.5 Z" fill="CLR" stroke="#fff" stroke-width="1" stroke-linejoin="round"/><path d="M31 5.5 L40 8.5 L31 11.5 Z" fill="#2b2b2b" stroke="#fff" stroke-width="1.1" stroke-linejoin="round"/><rect x="12" y="2.6" width="9" height="3.4" rx="1" fill="#2b2b2b" stroke="#fff" stroke-width=".9"/><path d="M14.5 10.5 L15.5 16 H19 L19 10.5 Z" fill="CLR" stroke="#fff" stroke-width="1" stroke-linejoin="round"/></svg>';
+function launchM(key,it,T,hold){var clr=(it.color==='#b3261e'||it.side==='ar')?'#b3261e':'#1d5ea8',east=(it.path[it.path.length-1][1]-it.path[0][1])>=0;
+  var m=spr(key,function(){var mk=L.marker(it.path[0],{icon:L.divIcon({className:'',html:'<span class="ap gu"><span style="display:block;width:30px;height:13px;transform:scaleX('+(east?1:-1)+')">'+LNSVG.replace(/CLR/g,clr)+'</span></span>',iconSize:[30,13],iconAnchor:[15,7]}),interactive:true,opacity:0});
+    mk.bindTooltip((it.label||'').replace(/טיל סאגר/,'משגר סאגר'),{permanent:false,direction:'top',className:'tt unt',interactive:true});popFor(mk,popHtml('משגר '+(/סאגר/.test(it.label||'')?'סאגר':'כתף')+' (סכמטי)','סמל משגר: '+sideOf(clr)+'. מצויר בנקודת השיגור; המקום והמסלול סכמטיים.',clockAt(it.t0)));return mk});
+  op(m,(T>=it.t0-.4&&T<=it.t1+hold)?clamp((T-it.t0+.4)/.4,0,1):0)}
+/* SURRENDER FLAG (the owner 10-26: "when there is a report of a surrender, show a white flag waving above the place for two hours of simulation time"): item type 'surrender' {at,t,label,q,s}: a white flag on a pole, waving (a still flag under reduced motion), above the place for SURR_MIN simulated minutes, then gone; the popup carries the source's quote. */
+var SURR_MIN=120,FLAGSVG='<svg viewBox="0 0 30 34" width="30" height="34" aria-hidden="true"><path d="M5 31 V3" stroke="#222" stroke-width="2.4" stroke-linecap="round"/><g class="cl"><path d="M6 4 C12 1 16 8 22 4 C25 3 27 4 28 4.5 V16 C26 15.5 24 15 22 16 C16 20 12 13 6 16 Z" fill="#fff" stroke="#555" stroke-width="1.1" stroke-linejoin="round"/></g></svg>';
+function surrenderM(key,it,T){var m=spr(key,function(){var mk=L.marker(it.at,{icon:L.divIcon({className:'',html:'<span class="ap sflag">'+FLAGSVG+'</span>',iconSize:[30,34],iconAnchor:[6,32]}),interactive:true,opacity:0});mk.bindTooltip(it.label,{direction:'top',className:'tt',interactive:true});
+    popFor(mk,popHtml(it.label.replace(/\s*\(סכמטי[^)]*\)\s*$/,''),'דגל לבן = דיווח על כניעה. '+(it.q?'«'+it.q+'» ':'')+(it.s?'('+it.s+') ':'')+'מוצג כשעתיים (זמן הסימולציה) מעל המקום'+(it.approx?'; המקום משוער.':'.'),clockAt(it.t)));return mk});
+  var m0=simMin(it.t),mT=simMin(T),vis=(m0!=null&&mT!=null)?(mT>=m0&&mT<m0+SURR_MIN):(T>=it.t&&T<it.t+12),f=(m0!=null&&mT!=null)?clamp((m0+SURR_MIN-mT)/10,0,1):1;
+  op(m,T>=it.t&&vis?Math.min(clamp((T-it.t)/.6,0,1),f):0)}
+function wreckM(key,it,T){var clr=it.side==='iaf'?'#1d5ea8':'#b3261e',n=Math.max(1,Math.min(4,it.n||1)),mult=(it.n||1)>4?Math.max(2,Math.round(it.n/4)):0;
+  var mk=function(k,svg,cls,what){return spr(k,function(){var h='<div class="wk '+cls+'">';for(var i=0;i<n;i++)h+=svg.replace(/CLR/g,clr);if(mult)h+='<span class="mult">×'+mult+'</span>';h+='</div>';var w=n*24+(mult?30:0),m=L.marker(it.at,{icon:L.divIcon({className:'',html:h,iconSize:[w,26],iconAnchor:[w/2,20]}),interactive:true,opacity:0});m.bindTooltip(it.label,{direction:'top',className:'tt',interactive:true});popFor(m,popHtml(it.label.replace(/\s*\(סכמטי\)\s*$/,''),what,clockAt(it.t)));return m})};
+  var down=T>=it.t,ground=it.tg!=null&&T>=it.tg&&T<it.t;
+  if(it.tg!=null){var g=mk(key+'g',PRK,'pk','מטוסים על הקרקע לפני התקיפה (סכמטי): '+sideOf(clr)+'. המקום הוא השדה שהערך מציין; מספר המטוסים המצויר אינו מספר מדויק.');op(g,ground?1:0)}
+  var w=mk(key,WRK,'wr','מטוסים שהושמדו (סכמטי): '+sideOf(clr)+'. נשארים על המפה כשלוש שעות (זמן הסימולציה) ואז נעלמים; המספר שנספר נשאר. '+(it.n>4?'מצוירים 4, והמספר האמיתי '+it.n+' (×'+mult+').':(it.n?'מצוירים '+n+'.':'')));var m0=simMin(it.t),mT=simMin(T),gone=(m0!=null&&mT!=null)?clamp((m0+WRECK_MIN-mT)/WRECK_FADE,0,1):1;op(w,down?Math.min(clamp((T-it.t)/.8,0,1),gone):0)}
+function updDest(T,S){var el=$('dest');if(!el)return;var c={iaf:0,ar:0},any=false;(S.items||[]).forEach(function(x){if(x.type==='destroyed'){any=true;if(T>=x.t)c[x.side==='iaf'?'iaf':'ar']+=x.n}});if(!any){el.hidden=true;return}el.hidden=false;el.textContent='מטוסים שהושמדו עד כה: ישראל '+c.iaf+' · הצד השני '+c.ar}
+var CURAF=1;
+function op(m,v){v=clamp(v*CURAF,0,1);m.setOpacity(v);var tt=m.getTooltip&&m.getTooltip();if(tt&&tt.setOpacity)tt.setOpacity(v>0.2?1:0);var pe=m.getElement&&m.getElement();if(pe)pe.style.pointerEvents=v>0.2?'':'none'}
+/* the owner 2026-10-19 "what are the white circle and rectangle?": every object on the map explains itself when pressed. Wording only restates what the page already says (schematic / exact point / who). */
+function popHtml(title,what,extra){return '<div dir="rtl" style="font-size:13px;line-height:1.5;max-width:240px;text-align:right;unicode-bidi:isolate"><b>'+esc(title)+'</b><br>'+esc(what)+(extra?'<br><small>'+esc(extra)+'</small>':'')+'</div>'}
+function clockAt(t){try{return A.acts[actAt(t)].clock}catch(e){return ''}}
+function sideOf(cls){return cls==='syr'||cls==='#b3261e'?'הצד השני':cls==='iaf'||cls==='#1d5ea8'?'ישראל':'כוח'}
+function popFor(m,html){if(!m||m._pop)return;m._pop=1;m.bindPopup(html,{closeButton:true,autoPan:true});if(m._tooltip&&m._tooltip.options)m._tooltip.options.interactive=true}
+function sc(m,k){var e=m.getElement();if(e&&e.firstChild)e.firstChild.style.transform='scale(calc(clamp(.85,var(--s),1.45)*'+k+'))'}
+function plane(key,clr,label){return spr(key,function(){var m=L.marker([0,0],{icon:planeIcon(clr),interactive:true,opacity:0});if(label){m.bindTooltip(label,{permanent:true,direction:'bottom',className:'tt',interactive:true});popFor(m,popHtml(label.replace(/\s*\(סכמטי\)\s*$/,''),'מטוס (סכמטי): '+sideOf(clr)+'. מסלול הטיסה ונקודת היציאה מצוירים, לא נתון מדויק.',''))}return m})}
+function lerpDeg(a,b,k){var d=((b-a+540)%360)-180;return a+d*k}
+/* Heading = the direction the icon really moves (tangent of its track, smoothed). Measured in map units at a fixed zoom, so zooming/panning never turns a plane; in reverse the nose follows the motion on screen (flies backwards visually). Standing still keeps the last heading. */
+function setPlane(m,p,h,o,k){m.setLatLng(p);op(m,o);var e=m.getElement();if(!e)return;var r=e.querySelector('.rot');if(!r)return;
+  var st=A.hd[m._leaflet_id]||(A.hd[m._leaflet_id]={a:null,pt:null}),q=map.project(L.latLng(p),10),mv=null;
+  if(st.pt){var dx=q.x-st.pt.x,dy=q.y-st.pt.y,d=Math.hypot(dx,dy);if(d>0.3&&d<60)mv=Math.atan2(dx,-dy)*180/Math.PI}
+  if(st.a===null)st.a=90-h*180/Math.PI;else if(mv!==null)st.a=lerpDeg(st.a,mv,.3);
+  st.pt=q;r.style.transform='rotate('+st.a+'deg) scale(calc(var(--s)*'+(k||1)+'))'}
+function boom(key,p,t0,dur,T,big){if(!(((T-t0)/dur)>0&&((T-t0)/dur)<1)&&!A.E.s[key])return;/* no marker is built for a burst that has not happened yet (R36 added hundreds) */var m=spr(key,function(){return L.marker(p,{icon:fixedIcon('boom','',46),interactive:false,opacity:0})});var f=(T-t0)/dur;if(f>0&&f<1){m.setLatLng(p);op(m,1-f*.6);sc(m,(big||1)*(0.4+f*1.1))}else op(m,0)}
+function dot(key,cls,w){return spr(key,function(){return L.marker([0,0],{icon:fixedIcon(cls,'',w),interactive:false,opacity:0})})}
+function xmark(key,p,T,t0,txt){if(!/^s\d+o$/.test(key))return;   /* the owner 10-21: no X symbols; the glow is the only mark. An impact with no unit drawn near it keeps a small quiet dot (tooltip: why) */
+  var m=spr(key,function(){var k=L.marker(p,{icon:L.divIcon({className:'',html:'<span class="qdot"></span>',iconSize:[10,10],iconAnchor:[5,5]}),interactive:true,opacity:0});if(txt)k.bindTooltip(txt,{className:'tt'});return k});op(m,T>=t0?1:0)}
+function smoke(key,posf,t0,T,n){for(var k=0;k<(n||5);k++){var m=dot(key+k,'smoke',14);var tt=T-t0-k*.3;if(tt>0&&tt<8){m.setLatLng(posf(Math.max(0,tt)));op(m,.55*(1-k/(n||5)))}else op(m,0)}}
+/* R52 (the owner 10-26: "no soldier on the water, no trails at sea - not of aircraft, not of ships"): every dotted trail / arrow line is drawn ONLY over land: the polyline is split at the water (land mask from daynight.js, memoised per 0.0001 deg point); an icon alone moves over the sea. ?clip=0 = debug switch. An item with water_ok (an outline drawn on purpose) keeps its line. */
+var CLIPOFF=/[?&]clip=0/.test(location.search),_lcm={};
+function isLand(la,lo){var d=window.__dn;if(!d||!d.landReady||!d.landReady())return 1;var k=Math.round(la*10000)*10000000+Math.round(lo*10000),v=_lcm[k];if(v===undefined){v=d.onLand(L.latLng(la,lo))?1:0;_lcm[k]=v}return v}
+function landClip(pts){if(CLIPOFF||!pts||pts.length<2)return pts;var d=window.__dn;if(!d||!d.landReady||!d.landReady())return pts;var runs=[],cur=[],all=true,i,k;
+  for(i=0;i<pts.length;i++){var a=pts[i];if(i>0){var b=pts[i-1],n=Math.min(12,Math.ceil(Math.max(Math.abs(a[0]-b[0]),Math.abs(a[1]-b[1]))/0.04));for(k=1;k<n;k++){var q=[b[0]+(a[0]-b[0])*k/n,b[1]+(a[1]-b[1])*k/n];if(isLand(q[0],q[1]))cur.push(q);else{all=false;if(cur.length>1)runs.push(cur);cur=[]}}}
+    if(isLand(a[0],a[1]))cur.push(a);else{all=false;if(cur.length>1)runs.push(cur);cur=[]}}
+  if(all)return pts;if(cur.length>1)runs.push(cur);return runs.length?runs:[[]]}
+/* R52: an arrow drawn on the sea (area sea / water_ok) never gets a soldier / unit icon at its tip: a dot or nothing */
+function ukA(it){return(it.area==='sea'||it.water_ok)&&(it.trail==='foot'||it.trail==='tank')?null:unitKind(it.label,it.trail,it.kind)}
+function lineSeg(key,color,pts,o,nc){var E=A.E;if(!E.s[key])E.s[key]=L.polyline([[0,0],[0,0]],{color:color,weight:3,dashArray:'3 5',opacity:0}).addTo(E.g);E.s[key].setLatLngs(nc?pts:landClip(pts));E.s[key].setStyle({opacity:o})}
+window.__a67={AR:function(){return AR},arCheck:arCheck,dbg:function(lab){var e=A.E.s;for(var k in e){var m=e[k];if(m.getTooltip&&m.getTooltip()&&String(m.getTooltip().getContent()).indexOf(lab)>=0){var id=m._leaflet_id;return {id:id,side:m._side,area:m._area,st:A.hd[id],gp:A.gp&&A.gp[id],fb:(typeof window.__fb==='function')?window.__fb(m,m.getLatLng?[m.getLatLng().lat,m.getLatLng().lng]:[0,0],A.hd[id]||{}):null}}}return null},faceCheck:function(){var out=[],gp=A.gp||{};for(var k in gp){var g=gp[k];if(!g.vis||!g.side||(A.rp|0)-g.rp>1)continue;var m=null,e=A.E&&A.E.s;for(var kk in e){if(e[kk]._leaflet_id==k){m=e[kk];break}}if(!m)continue;var el=m.getElement(),r=el&&el.querySelector('.rot');if(!r)continue;var a=+((/rotate\(([-\d.]+)deg\)/.exec(r.style.transform)||[0,0])[1]),bd=1e9,bb=null;for(var j in gp){var h=gp[j];if(j==k||!h.vis||h.side===g.side||(A.rp|0)-h.rp>1)continue;var dd=Math.hypot(h.p[0]-g.p[0],(h.p[1]-g.p[1])*.84);if(dd<bd){bd=dd;bb=(Math.atan2((h.p[1]-g.p[1])*.84,h.p[0]-g.p[0])*180/Math.PI+360)%360}}var near=[];for(var j2 in gp){var h2=gp[j2];if(j2==k||!h2.vis||h2.side===g.side||(A.rp|0)-h2.rp>1)continue;var d2=Math.hypot(h2.p[0]-g.p[0],(h2.p[1]-g.p[1])*.84);if(d2<=bd*1.5)near.push(Math.round((Math.atan2((h2.p[1]-g.p[1])*.84,h2.p[0]-g.p[0])*180/Math.PI+360)%360))}out.push({near:near,k:k,lab:(m.getTooltip&&m.getTooltip()&&m.getTooltip().getContent())||'',side:g.side,mv:g.mv,a:((a%360)+360)%360,enemy:bb,d:bd})}return out},A:A,simMin:function(T){return simMin(T)},seek:function(T){seekA(T)},map:function(){return map},cas:function(){return casEv().map(function(c){return {id:c.id,t:c.t,te:casEnd(c),m0:simMin(c.t),at:!!c.at,clock:c.clock}})},pts:function(){return simPts()},pers:function(it){return it.type==='walk'?(it.trail==='tank'||!!unitKind(it.label,it.trail)):it.type==='arrow'?(it.trail==='tank'||!!unitKind(it.label,it.trail,it.kind)):false}};
+function initAnim(){
+  var E=A.E;E.g=L.layerGroup();E.s={};
+  var G={haon:pt('haon'),eg:pt('eingev'),gad:pt('gadot'),kun:pt('kuneitra'),dam:pt('damascus')},R=D.areas.south_golan.bounds,DF=D.areas.south_of_damascus.center;
+  var IL=[31.62,34.93],SY=[33.42,36.62],cen=[lerp(R[0][0],R[1][0],.5),lerp(R[0][1],R[1][1],.5)],GR=[DF[0]-0.045,DF[1]+0.03];
+  var seed=[[.12,.2],[.3,.7],[.52,.25],[.7,.8],[.85,.35],[.2,.5],[.6,.55],[.4,.1],[.9,.7]],BAT=seed.map(function(q){return [lerp(R[0][0],R[1][0],q[0]),lerp(R[0][1],R[1][1],q[1])]});
+  var TG=[[.25,.3],[.5,.6],[.75,.35],[.4,.85]].map(function(q){return [lerp(R[0][0],R[1][0],q[0]),lerp(R[0][1],R[1][1],q[1])]});
+  var tIAF=[IL,[32.78,35.2],[cen[0]-0.03,cen[1]-0.12],cen,[cen[0]+0.06,cen[1]+0.02]],tOut=[[cen[0]+0.06,cen[1]+0.02],[32.95,35.25],IL],tSY=[SY,[33.5,36.4],DF],tMI=[IL,[32.9,35.3],[33.2,35.8],[DF[0]-0.03,DF[1]-0.14]],tMIout=[[DF[0]-0.03,DF[1]-0.14],[33.1,35.7],IL];
+  var tKun=[IL,[32.9,35.3],[33.05,35.65],[G.kun[0]-0.04,G.kun[1]-0.1]];
+  var tChase=[[G.kun[0],G.kun[1]],[33.3,36.0],[G.dam[0]-0.08,G.dam[1]-0.12]];
+  var arena=[cen[0]+0.02,cen[1]-0.02];
+  [tIAF,tSY,tMI,tKun].forEach(function(p,i){L.polyline(p,{color:['#1d5ea8','#b3261e','#1d5ea8','#1d5ea8'][i],weight:2,dashArray:'7 8',opacity:.55}).addTo(E.g)});
+  if(!D.icons)L.polyline(tChase,{color:'#1d5ea8',weight:2,dashArray:'7 8',opacity:.7}).bindTooltip('סכמטי, לא מסלול מדויק',{permanent:true,direction:'center',className:'tt'}).addTo(E.g);/* the owner 10-19: the hand-drawn blue dashed track line is dropped (the aircraft still fly the chase) */
+  [['haon','right'],['eingev','right'],['gadot','right'],['kuneitra','right'],['damascus','right']].forEach(function(k){var NW=!!D.icons,q0=D.places[k[0]],hh=(NW?(L.circleMarker(pt(k[0]),{radius:6,color:SIDEC[q0.side]||SIDEC.ar,weight:2,fill:false,interactive:false}).addTo(E.g),L.circleMarker(pt(k[0]),{radius:TOUCH?22:16,stroke:false,fillColor:'#000',fillOpacity:0})):L.circleMarker(pt(k[0]),{radius:6,color:'#222',weight:2,fillColor:'#fff',fillOpacity:1})).bindTooltip(D.places[k[0]].name.replace('קיבוץ ','')+(NW?'':' ◉'),{permanent:true,direction:k[1],className:'tt'+(NW?' plc':''),interactive:!(NW&&TOUCH),offset:NW?[-9,0]:[0,0]}).bindPopup(popHtml(D.places[k[0]].name,(D.places[k[0]].precision==='exact'?'מקום מדויק: ':'מקום משוער: ')+(D.places[k[0]].basis||'נקודת המקום בוויקיפדיה'),D.places[k[0]].precision==='exact'?'הנקודה היא המקום עצמו, לא מיקום האירוע':'מיקום משוער: חישבנו או שרטטנו אותו מהכתוב בערך')).addTo(E.g);if(NW){ringCapture();(E.pl=E.pl||[]).push(hh);hh.on('click',function(e){nearestPl(e.latlng)})}});
+  L.marker(IL,{icon:fixedIcon('base','בסיס',34),interactive:true}).bindTooltip('בסיס (מיקום סכמטי; הערך לא מציין)',{className:'tt'}).bindPopup(popHtml('בסיס','בסיס (מיקום סכמטי): הערך לא מציין איפה הבסיס, והעיגול מצויר כדי להראות מאיפה יצאו הכוחות.','סכמטי')).addTo(E.g);
+  L.marker(SY,{icon:fixedIcon('base','בסיס',34),interactive:true}).bindTooltip('בסיס סורי (מיקום סכמטי; הערך לא מציין)',{className:'tt'}).bindPopup(popHtml('בסיס סורי','בסיס (מיקום סכמטי): הערך לא מציין איפה הבסיס, והעיגול מצויר כדי להראות מאיפה יצאו המטוסים.','סכמטי')).addTo(E.g);
+  var ARENA=null;
+  if(D.icons)legIcons();
+  A.G={ARENA:ARENA,G:G,R:R,DF:DF,GR:GR,IL:IL,SY:SY,BAT:BAT,TG:TG,arena:arena,cen:cen};
+  /* ---- the acts: start (s), end (e), clock label, view, captions [local offset, quote, honest note] ---- */
+  A.acts=[
+   {s:0,e:7,clock:'עם שחר',view:[[32.6,35.35],[32.85,35.85]],caps:[[0,'תקיפה חמורה במיוחד ארעה ב-7 באפריל, כשלעבר טרקטור ישראלי שהחל בעבודה עם שחר בסמוך לקיבוץ האון שממזרח לכנרת נפתחה אש מקלעים ותותחי נ"מ 37 מ"מ מהמוצב הסורי "עמרת עז א-דין".','הסימון: נקודת הקיבוץ האון. מיקום הטרקטור והמוצב הסורי לא צוינו, ולכן אין להם סימון; הבזקי האש סכמטיים']]},
+   {s:7,e:14,clock:'10:00',view:[[32.6,35.35],[32.85,35.85]],caps:[[0,'החל מהשעה 10:00 בבוקר החלו חילופי אש בין כוחות צה"ל לבין המוצבים הסוריים כולל ירי מרגמות 120 מ"מ וירי טנקים. בירי נהרג קצין צה"ל […], ונפגעו שלושה טרקטורים חקלאיים. לסורים נפגע טנק פנצר, פוצץ מצבור תחמושת ונפגעו מבנים.','מקום חילופי האש לא צוין בערך: אין סימון במפה, רק הצליל ומד השעה']]},
+   {s:14,e:22,clock:'משעות הצהריים',view:[[32.7,35.4],[33.15,35.95]],caps:[[0,'משעות הצהריים החלו הסורים להפגיז את היישובים הישראלים הקרובים לגבול. תושבי היישובים ירדו למקלטים וכמעט שלא היו נפגעים בהפגזות. הקיבוצים גדות ועין גב ספגו הפגזות כבדות ובתים רבים נפגעו מפגיעות ישירות. בגדות נפגעו כמעט כל המבנים.','חיצי ההפגזה סכמטיים: מיקום הסוללות הסוריות לא צוין; השעה "משעות הצהריים" בלבד']]},
+   {s:22,e:34,clock:'13:32',view:[[32.55,34.9],[33.15,35.95]],caps:[[0,'בשעה 13:32 הוזנקו מטוסי הפצצה מדגם ווטור של חיל האוויר הישראלי והחלו תוקפים מוצבים סוריים וסוללות תותחים בדרום רמת הגולן.','מסלול הטיסה והבסיס סכמטיים; מספר המטוסים והמטרות לא צוין'],[28,'לאחריהם הפציצו גם מטוסי מיסטר, אוראגן וסופר מיסטר.','אזור התקיפה: דרום הגולן (קירוב); מספר המטוסים לא צוין']]},
+   {s:34,e:40,clock:'כ-14:00',view:[[32.55,34.9],[33.6,36.7]],caps:[[0,'בתגובה שיגר חיל האוויר הסורי בסמוך לשעה 14:00 מטוסי ירוט. מטוסי ההפצצה הישראליים הפסיקו את פעילותם ועזבו את האזור לאחר 28 דקות של הפצצה מחשש ליירוטם. כנגד מטוסי היירוט הסוריים הוזנק זוג מטוסי מיראז\' 3 מטייסת הקרב הראשונה.','הבסיסים והמסלולים (גם חזרת מטוסי ההפצצה לבסיס) סכמטיים; כמות המיגים לא צוינה, המיראז\'ים: זוג']]},
+   {s:40,e:46,clock:'כ-13:58 (כך במאמר)',view:[[32.95,35.45],[33.45,36.2]],caps:[[0,'טייסי המיראז\' הבחינו בזוג מטוסי מיג 21 מעל קוניטרה. המוביל סרן יפתח ספקטור ביצע יעף של ירי תותחים והפיל בסמוך לשעה 13:58 את מספר 2 בזוג הסורי.','הערך מציין 13:58 אחרי "כ-14:00"; השארנו כמו שכתוב. הסימון: נקודת העיר קוניטרה']]},
+   {s:46,e:55,clock:'אחרי ההפלה הראשונה',view:[[33.0,35.6],[33.65,36.5]],caps:[[0,'לאחר מכן נערכו זוג המיראז\'ים להפלת המיג הנוסף. במרדף ממושך מעל דמשק פגע סרן בנימין רומח במיג אך לא הפילו. לאחר מכן ספקטור שיגר כנגד המיג הפגוע טיל מאטרה R530 (יהלום) שהתפוצץ מוקדם מדי ולבסוף הפילו בירי תותחים. המיג השני הוחשב כהפלה משותפת של ספקטור ורומח. בשלב זה הגיעו זוג המיראז\'ים למגבלת הדלק ושבו לבסיסם.','המסלול וחזרת הזוג לבסיס סכמטיים; הסימון: נקודת העיר דמשק. שעות לא צוינו']]},
+   {s:55,e:60,clock:'אחרי שני המיגים הראשונים',view:[[32.55,34.9],[33.6,36.7]],caps:[[0,'לאחר הפלת שני המיגים הראשונים, הזניקו הישראלים והסורים מטוסי יירוט נוספים שניהלו קרבות אוויר ושבו לבסיסם ללא הפלות.','מקום הקרבות וכמות המטוסים לא צוינו: אין סימון']]},
+   {s:60,e:102,clock:'15:25',view:[[32.62,34.95],[33.6,36.65]],caps:[[0,'בשעה 15:25 חידש חיל האוויר הישראלי את ההפצצה על סוללות תותחים סוריות שהפגיזו את גדות,','ההפגזה על גדות: חיצים סכמטיים מ-9 מיקומי סוללות משוערים באזור דרום הגולן'],[8,'ופגע בתשע מהן.','כמות המטוסים לא צוינה בערך; מסלול הטיסה והבסיס סכמטיים'],[17,'כנגדו שוגרו שוב מטוסי ירוט סוריים.','הבסיס הסורי והמסלול סכמטיים; הערך לא מציין'],[21,'שוב הוזנקו כנגד המטוסים הסוריים מטוסי מיראז\', הפעם מטייסת העטלף.','הבסיס והמסלול סכמטיים; כמות המטוסים לא צוינה'],[28,'בקרב אוויר נוסף שהתפתח הופל מיג 21 בתותחים דרומית לדמשק על ידי רס"ן רן פקר.','מקום ההפלה: אזור משוער דרומית לדמשק. נקודת הנפילה והעשן סכמטיים']]},
+   {s:102,e:116,clock:'16:16',view:[[32.62,35.2],[33.2,36.1]],caps:[[0,'בשעה 16:16 שיגר חיל האוויר הסורי רביעיית מטוסי ירוט נוספים לעבר המטוסים הישראלים שעדיין שהו באזור הקרבות. בקרבות אוויר שהתפתחו ביניהם הופלו שלושה מטוסי מיג 21 על ידי רס"ן עזרא דותן, סרן אבי לניר וסרן אבנר סלפק. המיג הרביעי נמלט.','מקום הקרבות לא צוין: האזור המסומן סכמטי; כמות המטוסים הישראליים לא צוינה'],[11,'במהלך קרב האוויר הצמוד חלף מטוסו של אבי לניר בתוך אש ההתפוצצות של המיג שיירט ומטוסו התכסה בפיח שלא איפשר ראות מתא הטייס. לניר המשיך בטיסה כשמטוס מיראז\' מלווה אותו ולבסוף הנחית את מטוסו בשלום.','לימים כונה האירוע "פרשת המיראז\' השחור"']]},
+   {s:116,e:124,clock:'בערב',view:[[32.55,34.9],[33.65,36.7]],caps:[[0,'בסך הכל הופלו לסורים שישה מטוסי מיג 21, שהיו מטוסי הירוט הסובייטיים המתקדמים ביותר. כל המטוסים הופלו בירי תותחי מטוסים. שניים מהמטוסים הופלו מעל דמשק ואחרים מעל רמת הגולן וירדן. לצה"ל הרוג אחד.','בערב אותו יום העלה הרמטכ"ל יצחק רבין את מפקד חיל האוויר, מוטי הוד, מדרגת אל"ם לאלוף. יש הרואים ביום קרב זה כתחילתה של ההסלמה שהובילה למלחמת ששת הימים, שפרצה כחודשיים לאחר מכן.']]}
+  ];
+  A.kills=[44,53,97,110,111,112];                                   /* the six MiG-21 of the article, in the order it tells them */
+  /* ---- sounds: [absolute second, kind] ---- */
+  A.sfx=[[1.5,'mg'],[2.6,'mg'],[3.8,'mg'],[5,'mg'],[8,'mortar'],[9,'cannon'],[10.2,'mortar'],[11.2,'cannon'],[12.6,'mortar'],[15,'thud'],[16.5,'thud'],[18,'thud'],[19.5,'thud'],[21,'thud'],[24,'jet'],[28.5,'jet'],[28.2,'whistle'],[30,'boom'],[31.2,'boom'],[32.4,'boom'],[33.2,'boom'],[34.6,'beep'],[36.4,'beep'],[37,'jet'],[43.4,'cannon'],[45,'crash'],[47,'jet'],[48.6,'missile'],[49.6,'pop'],[52.2,'cannon'],[53,'crash'],[56,'jet'],[57.5,'cannon'],[59,'cannon'],[61,'thud'],[63,'thud'],[65,'thud'],[67,'thud'],[69,'jet'],[71.2,'whistle'],[72.2,'boom'],[73,'boom'],[73.9,'boom'],[74.7,'boom'],[75.5,'boom'],[76.3,'boom'],[77.1,'boom'],[77.9,'boom'],[78.7,'boom'],[79.5,'beep'],[81.5,'beep'],[85,'jet'],[91.2,'cannon'],[92.4,'cannon'],[97.2,'crash'],[102.6,'beep'],[105,'jet'],[107,'cannon'],[108.5,'cannon'],[110,'crash'],[110.8,'cannon'],[111.4,'crash'],[112.2,'crash']];
+  A.sfx.sort(function(a,b){return a[0]-b[0]});A.nextSfx=0;
+  A.view0=[[32.55,34.9],[33.65,36.7]];
+  wireAnim();
+}
+
+/* WHAT-not-WHO measurement of how a war page is used (the owner 2026-10-25): one event per kind of use, the war's slug in k (from the URL), the value in v - to our ev pipeline (Grafana) and to GA4. Nothing personal; page views and visible seconds come from eventlog.js. */
+function evw(name,v){var k=((location.pathname.match(/\/war\/\d+\/([^\/]+)/)||[])[1])||'war';try{if(window.goinfo&&window.goinfo.ev)window.goinfo.ev(name,{k:k,v:String(v)})}catch(e){}try{if(window.gtag)window.gtag('event',name,{war:k,value:String(v)})}catch(e){}}
+function wireMeasure(){
+  if(window._wm)return;window._wm=1;
+  var _ts=toggleSound;toggleSound=function(auto){var was=A.muted;_ts(auto);evw('sound_toggle',auto?(A.muted?'auto_failed':'on_auto'):(A.muted?'off':'on'))};
+  var _sf=setFollow;setFollow=function(v,explicit){_sf(v,explicit);if(explicit)evw('follow_toggle',v?'on':'off')};
+  map.on('dragstart',function(){if(!A.prog&&A.on)evw('follow_toggle','off_pan')});
+  map.on('zoomstart',function(){if(!A.prog&&A.on)evw('follow_toggle','off_zoom')});
+  ['aPlay','aPlay2'].forEach(function(id){var b=$(id);if(b)b.addEventListener('click',function(){setTimeout(function(){evw('play_pause',A.playing?'play':'pause')},0)})});
+  $('aT').addEventListener('input',function(){evw('scrub','scrub')});
+  var _st=seekTo;seekTo=function(T){_st(T);evw('card_open','T'+Math.round(T))};
+  var _fa=focusArea;focusArea=function(id,fromOut){_fa(id,fromOut);if(A.inited)evw('battle_select',id)};
+}
+/* DEEP LINKS (the owner 2026-10-25, "enable all the war pages linkable to position, zoom and time"): the address carries the view. #t=<battle minute>&z=<zoom>&c=<lat>,<lng>[&a=<area>]
+   (s=<scene seconds> when the scene has no battle clock). Opening such a link restores that view, PAUSED, camera-follow off; any missing or invalid part falls back to the default and never breaks the page.
+   The hash follows pan / zoom / seek (replaceState, debounced: no history entries, no reload), so the address bar is always the shareable link; "העתק קישור לנקודה זו" copies it (Web Share on touch devices).
+   The old #<area> form (focusArea) is untouched: a hash without "=" is an area name. */
+function dlParse(){var h=(location.hash||'').slice(1);if(h.indexOf('=')<0)return null;var p={},o={};try{h.split('&').forEach(function(x){var i=x.indexOf('=');if(i>0)p[x.slice(0,i)]=decodeURIComponent(x.slice(i+1))})}catch(e){return null}
+  if(p.t!==undefined&&p.t!==''&&isFinite(+p.t)){var T0=simT(+p.t);if(T0!=null)o.T=T0}
+  if(o.T==null&&p.s!==undefined&&p.s!==''&&isFinite(+p.s))o.T=+p.s;
+  var c=(p.c||'').split(',');if(c.length===2&&c[0]!==''&&c[1]!==''&&isFinite(+c[0])&&isFinite(+c[1])&&Math.abs(+c[0])<=90&&Math.abs(+c[1])<=180)o.c=[+c[0],+c[1]];
+  var z=p.z===undefined||p.z===''?NaN:+p.z;if(isFinite(z)&&z>=1&&z<=19)o.z=z;
+  if(p.a&&D.views&&D.views[p.a])o.a=p.a;
+  return (o.T!=null||o.c||o.z||o.a)?o:null}
+function dlApply(o){if(!o)return;try{if(o.a)focusArea(o.a,true)}catch(e){}
+  if(o.T!=null||o.c){setFollow(false);A.dlOff=true}if(o.T!=null){pauseA();seekA(o.T)}
+  A.prog=true;try{if(o.c)map.setView(o.c,o.z||map.getZoom(),{animate:false});else if(o.z)map.setZoom(o.z,{animate:false})}catch(e){}setTimeout(function(){A.prog=false},300)}
+function dlHash(){var T=A.T,m=simMin(T),c=map.getCenter(),h=(m!=null&&isFinite(m)?'t='+Math.round(m):'s='+T.toFixed(1))+'&z='+map.getZoom()+'&c='+c.lat.toFixed(4)+','+c.lng.toFixed(4)+(SEL&&SEL!=='all'?'&a='+SEL:'');return h}
+function wireDeepLink(){if(window._dl)return;window._dl=1;var tm=0,sync=function(){clearTimeout(tm);tm=setTimeout(function(){try{history.replaceState(null,'','#'+dlHash())}catch(e){}},400)};
+  map.on('moveend zoomend',sync);var _sk=seekA;seekA=function(T){_sk(T);sync()};setInterval(function(){if(A.playing)sync()},2000);
+  addEventListener('hashchange',function(){var o=dlParse();if(o)dlApply(o)});
+  var bar=$('bLeg')&&$('bLeg').parentNode;if(bar){var b=document.createElement('button');b.className='btn';b.id='bLink';b.type='button';b.textContent='העתק קישור לנקודה זו';b.title='קישור למקום, לרמת הזום ולשעה שמוצגים עכשיו';bar.insertBefore(b,$('bLeg').nextSibling);
+    var toast=function(t){var d=document.getElementById('dlToast');if(!d){d=document.createElement('div');d.id='dlToast';d.setAttribute('role','status');d.style.cssText='position:fixed;inset-inline:12px;bottom:calc(var(--bar,56px) + 14px);z-index:3000;margin:auto;max-width:360px;padding:9px 14px;border-radius:12px;background:#222;color:#fff;text-align:center;font-size:14px;box-shadow:0 2px 10px rgba(0,0,0,.3)';document.body.appendChild(d)}d.textContent=t;d.hidden=false;clearTimeout(d._t);d._t=setTimeout(function(){d.hidden=true},2200)};
+    b.addEventListener('click',function(){try{history.replaceState(null,'','#'+dlHash())}catch(e){}var u=location.href;
+      if(navigator.share&&TOUCH){navigator.share({title:document.title,url:u}).then(function(){evw('share_link','share')}).catch(function(){});return}
+      var done=function(){evw('share_link','copy');toast('הקישור הועתק')};
+      if(navigator.clipboard&&navigator.clipboard.writeText){navigator.clipboard.writeText(u).then(done).catch(function(){toast(u)})}
+      else{try{var ta=document.createElement('textarea');ta.value=u;ta.style.cssText='position:fixed;opacity:0';document.body.appendChild(ta);ta.select();document.execCommand('copy');ta.remove();done()}catch(e){toast(u)}}})}
+  dlApply(dlParse())}
+function shipLegend(){var L=document.getElementById('pLeg');if(!L||L.querySelector('#lgShips')||!ICONS)return;var d=document.createElement('span');d.className='lg';d.id='lgShips';d.innerHTML='ספינות: '+['msb','tor','mine','lcr','shp'].map(function(k){return '<span style="display:inline-block;vertical-align:middle;margin-inline:2px 6px">'+ksvg(k,'#1d5ea8')+'</span>'+KNAME[k]}).join(' · ')+' (כחול ישראל, אדום הצד השני; החרטום בכיוון התנועה)';L.appendChild(d)}
+/* AIR-DEFENCE COVER as subtle circles (the owner 10-25: "change the SAM boundaries to fine circles"): {type:'sam',c:[lat,lng],r:<metres>,t0}: a thin dashed ring, almost no fill, a calm grey-blue, in its own pane UNDER every marker and
+   label, not clickable (nothing competes with the units), hidden while the map zooms and faded back after. The radius is whatever the data says it is (the sources give no battery positions: the data file states what the radius means). */
+function samC(key,it,T){var on=T>=it.t0&&T>=0,c=spr(key,function(){if(!map.getPane('sam')){var pn=map.createPane('sam');pn.style.zIndex=395;pn.style.pointerEvents='none'}return L.circle(it.c,{radius:it.r,pane:'sam',color:'#5b7a99',weight:1,dashArray:'2 6',opacity:0,fillColor:'#5b7a99',fillOpacity:0,interactive:false})});
+  var f=on?clamp((T-it.t0)/1.5,0,1):0;c.setStyle({opacity:.65*f*CURAF,fillOpacity:.035*f*CURAF})}
+function samZoomHide(){var pn=function(){return map.getPane('sam')},t=0;map.on('zoomstart',function(){var p=pn();if(p){clearTimeout(t);p.style.transition='none';p.style.opacity='0'}});map.on('zoomend',function(){var p=pn();if(p){clearTimeout(t);t=setTimeout(function(){p.style.transition='opacity .35s';p.style.opacity='1'},200)}})}
+function samLegend(){var L=document.getElementById('pLeg');if(!L||L.querySelector('#lgSam')||!(A.scene.items||[]).some(function(x){return x.type==='sam'}))return;var d=document.createElement('span');d.className='lg';d.id='lgSam';d.innerHTML='<span style="display:inline-block;vertical-align:middle;width:16px;height:16px;border-radius:50%;border:1px dashed #5b7a99;margin-inline-end:8px"></span> עיגול מקווקו עדין = כיסוי נ״מ (סכמטי; מה הרדיוס אומר כתוב בהסבר של האירוע)';L.appendChild(d)}
+function wireAnim(){
+  wireMeasure();
+  map.scrollWheelZoom.enable();map.addControl(L.control.scale({imperial:false,position:'bottomleft'}));
+  map.on('zoomend',function(){var z=map.getZoom();A.S=clamp(0.55+(z-7.5)*0.2,.6,1.7);$('map').style.setProperty('--bs',z>=11?1:z>=10?.85:z>=9?.7:.55);$('map').style.setProperty('--s',A.S)});
+  ['mousedown','touchstart','touchmove','touchend','wheel','mouseup','keydown'].forEach(function(k){map.getContainer().addEventListener(k,function(){if(!A.prog)arTouch()},{passive:true,capture:true})});map.on('dragstart zoomstart dragend zoomend',function(){if(!A.prog)arTouch()});
+  map.on('dragstart',function(){if(!A.prog)setFollow(false)});
+  map.on('zoomstart',function(){if(!A.prog&&A.on)setFollow(false)});
+  $('bAnim').addEventListener('click',function(){toggleAnim(!A.on)});
+  $('aPlay').addEventListener('click',function(){A.playing&&A.dir===1?pauseA():playA(1)});
+  $('aRev').addEventListener('click',function(){A.playing&&A.dir===-1?pauseA():playA(-1)});
+  $('aRe').addEventListener('click',function(){seekA(0);playA(1)});
+  $('aPrev').addEventListener('click',function(){stepEvent(-1)});$('aNext').addEventListener('click',function(){stepEvent(1)});
+  $('aB10').addEventListener('click',function(){seekA(A.T-10)});$('aF10').addEventListener('click',function(){seekA(A.T+10)});
+  $('aSlow').addEventListener('click',function(){setSpeed(-1)});$('aFast').addEventListener('click',function(){setSpeed(1)});
+  $('aT').addEventListener('input',function(){pauseA();seekA((+this.value)/10)});
+  $('aFollow').addEventListener('click',function(){A.dlOff=false;setFollow(!A.follow,true);if(A.follow)gotoAct(true)});
+  $('aReset').addEventListener('click',function(){progView(A.view0)});
+  $('aSnd').addEventListener('click',function(){toggleSound()});/* was addEventListener('click',toggleSound): the click event became the `auto` argument, so the desktop button could only turn sound ON, never off, and never saved the choice */
+  $('aMap').addEventListener('click',function(){setMapOnly(true)});$('aMapOff').addEventListener('click',function(){setMapOnly(false)});$('aSndM').addEventListener('click',function(){toggleSound()});$('aPlay2').addEventListener('click',function(){A.playing&&A.dir===1?pauseA():playA(1)});
+  var mo=null;try{mo=localStorage.getItem('apr67map')}catch(e){}var phone=matchMedia('(max-width:899px),(orientation:landscape) and (max-height:520px)').matches;A.phone=phone;if(phone&&(mo==='on'||mo===null))setMapOnly(true,true);
+  document.addEventListener('keydown',function(e){if(!A.on)return;var k=e.key;if(k===' '){e.preventDefault();A.playing?pauseA():playA(1)}else if(k==='+'||k==='='){setSpeed(1)}else if(k==='-'){setSpeed(-1)}else if(k==='ArrowLeft'){seekA(A.T-10)}else if(k==='ArrowRight'){seekA(A.T+10)}else if(k==='['){stepEvent(-1)}else if(k===']'){stepEvent(1)}else if(k==='r'||k==='R'){playA(A.dir===1?-1:1)}});
+  $('aBub').addEventListener('click',function(){setBub(document.body.classList.contains('nobub'))});
+  var bp=null;try{bp=localStorage.getItem('apr67bub')}catch(e){}setBub(bp==='on'?true:bp==='off'?false:innerWidth>=400);
+  $('pCol').addEventListener('click',function(){document.body.classList.toggle('pcol');setTimeout(function(){map.invalidateSize();gotoAct(true)},60)});
+  $('rotNo').addEventListener('click',function(){rotDone()});
+  if(!document.documentElement.requestFullscreen)$('rotFs').style.display='none';   /* iPhone Safari: no fullscreen API, the hint alone */
+  $('rotFs').addEventListener('click',function(){try{var r=document.documentElement.requestFullscreen&&document.documentElement.requestFullscreen();Promise.resolve(r).then(function(){try{return screen.orientation.lock('landscape')}catch(e){}}).catch(function(){})}catch(e){}rotDone()});
+  document.addEventListener('fullscreenchange',function(){if(!document.fullscreenElement){try{screen.orientation.unlock()}catch(e){}}});
+  addEventListener('resize',function(){map.invalidateSize();chkRot();placeZoom();placeG2()});placeZoom();placeG2();setTimeout(placeG2,700);if(screen.orientation&&screen.orientation.addEventListener)screen.orientation.addEventListener('change',function(){setTimeout(function(){map.invalidateSize();gotoAct(true);chkRot();placeZoom();placeG2()},120)});
+  try{A.folPref=localStorage.getItem('apr67fol')}catch(e){A.folPref=null}if(A.folPref==='off')setFollow(false);A.inited=true;
+  try{A.pref=localStorage.getItem('apr67snd')}catch(e){A.pref=null}
+  updSnd();
+  /* the opening card replaces the 'press to enable sound' prompt (the owner 10-26): its tap unlocks sound */
+  var INTROON=!!(D.intro&&!/[?&](intro=0|still=)/.test(location.search));
+  /* Sound, first gesture (every device): browsers keep audio locked until the visitor does something, so the first click/tap/key anywhere (except on the sound buttons, which do their own toggle) unlocks it, unless the visitor turned it off earlier (apr67snd=off). 2026-10-19: this used to be phone-only, and a tap on the speaker button ran BOTH this and the button's own toggle, turning sound off again. */
+  if(A.pref!=='off'&&!/[?&]still=/.test(location.search)){var autoSnd=function(e){if(e.target&&e.target.closest&&e.target.closest('#aSnd,#aSndM'))return;['click','touchend','keydown'].forEach(function(k){document.removeEventListener(k,autoSnd,true)});if(A.muted&&A.pref!=='off')toggleSound(true)};['click','touchend','keydown'].forEach(function(k){document.addEventListener(k,autoSnd,true)});if(!INTROON)sndToast(true)}
+  toggleAnim(true);introInit();
+    var st=/[?&]still=([\d.]+)/.exec(location.search);if(st){document.body.classList.add('still');setFollow(false);pauseA();var sa=(/[?&]area=([a-z]+)/.exec(location.search)||[])[1]||'all';SEL=sa;A.T=+st[1];renderA();map.invalidateSize();map.fitBounds((D.still_views&&D.still_views[sa]&&A.scene?D.still_views[sa]:A.acts[actAt(A.T)].view),{animate:false,padding:[24,24]});document.title+=' (תמונה)'}
+  wireDeepLink();shipLegend();samLegend();samZoomHide();
+}
+/* numbers and ranges inside Hebrew text keep left-to-right order ("5–10" must not read "10–5") */
+function introNum(n,t){String(t).split(/(\d[\d,.]*(?:[–-]\d[\d,.]*)?)/).forEach(function(x,i){if(!x)return;if(i%2){var b=document.createElement('bdi');b.dir='ltr';b.textContent=x;n.appendChild(b)}else n.appendChild(document.createTextNode(x))})}
+function introInit(){var I=D.intro;if(!I||/[?&]intro=0/.test(location.search)||/[?&]still=/.test(location.search))return;   /* the owner 10-26: the opening card shows on EVERY load, deep links included (after the tap the page plays from the linked moment); ?intro=0 is a dev/test switch only */
+  var el=$('intro');el.hidden=false;document.body.classList.add('intro');pauseA();
+  $('iT').textContent=I.title;introNum($('iD'),I.dates);var c=$('iC');
+  (I.sides||[]).forEach(function(sd){var d=document.createElement('div');d.className='nb '+sd.k;var h=document.createElement('h3');h.textContent=sd.name;d.appendChild(h);(sd.lines||[]).forEach(function(l){var p=document.createElement('p');introNum(p,l);d.appendChild(p)});c.appendChild(d)});
+  var s=$('iS');if(I.src){s.appendChild(document.createTextNode('מקור: '));var a=document.createElement('a');a.href=I.src.u;a.target='_blank';a.rel='noopener';a.className='tml';a.textContent=I.src.t;s.appendChild(a);if(I.note)s.appendChild(document.createTextNode(' · '+I.note))}else if(I.note)s.textContent=I.note;
+  var steps=[['iT',200],['iD',2300],['.nb.il',3300],['.nb.ar',4500],['iS',5500],['iGo',6200],['iH',6600]],tm=[],done=false;
+  function show(k){var n=k.charAt(0)==='.'?el.querySelector(k):$(k);if(n)n.classList.add('on')}
+  steps.forEach(function(x){tm.push(setTimeout(function(){show(x[0])},x[1]))});
+  if(matchMedia('(prefers-reduced-motion:reduce)').matches){tm.forEach(clearTimeout);steps.forEach(function(x){show(x[0])})}
+  function go(e){if(done)return;if(e&&e.target&&e.target.closest&&e.target.closest('a'))return;done=true;tm.forEach(clearTimeout);
+    el.removeEventListener('click',go);document.removeEventListener('keydown',go,true);
+    var full=!!el.querySelector('.ngo.on'),how=e&&e.type==='keydown'?'key':(e&&e.target&&e.target.id==='iGo'?'button':'tap');
+    try{A.pref='on';try{localStorage.setItem('apr67snd','on')}catch(x){}/* a visitor who muted earlier hears sound again: the start tap is the request for sound (the owner 10-26) */if(A.muted)toggleSound(true);if(A.ctx){try{var ub=A.ctx.createBuffer(1,1,22050),us=A.ctx.createBufferSource();us.buffer=ub;us.connect(A.ctx.destination);us.start(0)}catch(x2){}if(A.ctx.resume)A.ctx.resume()}}catch(x){}
+    document.body.classList.add('intro-out');setTimeout(function(){document.body.classList.remove('intro','intro-out');el.hidden=true;chkRot()},650);
+    playA(1);evw('intro_start',(full?'full_':'early_')+how)}
+  el.addEventListener('click',go);document.addEventListener('keydown',go,true)}
+function progView(b,dur){A.prog=true;map.flyToBounds(b,{paddingTopLeft:[10,padT()],paddingBottomRight:[10,padB()],duration:dur==null?1.1:dur,animate:true});setTimeout(function(){A.prog=false},(dur==null?1.1:dur)*1000+200)}
+function desk(){return matchMedia('(min-width:900px) and (min-height:521px), (orientation:landscape) and (max-height:520px)').matches}
+function setBub(on){document.body.classList.toggle('nobub',!on);$('aBub').setAttribute('aria-pressed',String(on));try{localStorage.setItem('apr67bub',on?'on':'off')}catch(e){}}
+/* the owner 10-21: on a phone the war pages default to the HORIZONTAL layout. A browser cannot force rotation, so a portrait phone gets the rotate hint on EVERY visit (dismissed only for the rest of the visit, sessionStorage), with a one-tap fullscreen + landscape-lock button where the API exists (not on iPhone: then only the hint); landscape switches to the landscape layout by the media queries above. */
+var rotSeen=false;function rotDone(){rotSeen=true;try{sessionStorage.setItem('apr67rot','1')}catch(e){}$('rot').classList.remove('on')}
+function chkRot(){var seen=rotSeen;try{seen=seen||sessionStorage.getItem('apr67rot')==='1'}catch(e){}$('rot').classList.toggle('on',!!(A.on&&!seen&&matchMedia('(orientation:portrait)').matches&&matchMedia('(pointer:coarse)').matches&&innerWidth<700))}
+function padB(){var u=$('animui');return desk()?70:(u&&!u.hidden?u.offsetHeight:0)+14}
+function padT(){return desk()?(matchMedia('(max-height:520px)').matches?44:64):150}
+(function(){var bm=document.getElementById('bMenu');if(!bm)return;function sh(on){document.body.classList.toggle('menu-open',on);bm.setAttribute('aria-expanded',String(on));bm.textContent=on?'✕':'☰'}
+ bm.addEventListener('click',function(e){e.stopPropagation();sh(!document.body.classList.contains('menu-open'))});
+ document.addEventListener('click',function(e){if(!document.body.classList.contains('menu-open'))return;var tp=document.getElementById('topMenu');if(e.target.closest&&(e.target.closest('#bMenu')))return;if(tp&&tp.contains(e.target)){if(e.target.closest('button'))setTimeout(function(){sh(false)},60);return}sh(false)},true)})();
+function setMapOnly(on,dflt){document.body.classList.toggle('maponly',on);$('aMap').setAttribute('aria-pressed',String(on));if(!dflt){try{localStorage.setItem('apr67map',on?'on':'off')}catch(e){}}setTimeout(function(){map.invalidateSize();if(A.on)gotoAct(true)},80)}
+function placeG2(){var g=document.querySelector('.g2'),cap=document.getElementById('cap'),rail=document.querySelector('.rail');if(!g||!cap||!rail)return;
+  var up=matchMedia('(orientation:portrait) and (max-width:899px)').matches;document.body.classList.toggle('g2up',up);
+  if(up&&g.parentNode!==cap.parentNode)cap.parentNode.insertBefore(g,cap);else if(!up&&g.parentNode!==rail)rail.appendChild(g);
+  var tb=document.querySelector('.top'),hud=document.getElementById('hud'),zr=document.querySelector('.leaflet-top.leaflet-right');var ty=up&&tb?(tb.getBoundingClientRect().bottom+6)+'px':'';if(hud)hud.style.top=ty;if(zr&&!document.body.classList.contains('maponly'))zr.style.marginTop=ty}
+function placeZoom(){if(!A.zc||!window.map&&false)return;var land=matchMedia('(orientation:landscape) and (max-height:520px)').matches,pos=land?'topleft':desk()?'bottomleft':'topright';if(A.zc.getPosition()!==pos){map.removeControl(A.zc);A.zc.setPosition(pos);A.zc.addTo(map)}}
+function setFollow(v,explicit){A.follow=v;$('aFollow').setAttribute('aria-pressed',String(v));if(explicit){A.folPref=v?'on':'off';try{localStorage.setItem('apr67fol',A.folPref)}catch(e){}}}
+function altOn(){var C=D.whole&&D.whole.alt;return !!C&&A.T>=C.t0&&A.T<C.t1&&!(A.altOff>A.T)}/* a next/previous-event jump suspends the front-alternating camera for 12 scene-seconds */
+function altCam(){var C=D.whole&&D.whole.alt;if(!C||!A.follow)return;if(altOn()){var k=Math.floor((A.T-C.t0)/C.period)%C.views.length;if(k!==A.altK){A.altK=k;camTo(C.views[k],false)}}else A.altK=-1}
+function gotoAct(force){var i=actAt(A.T);if(i!==A.cur||force){A.cur=i;if(A.follow&&!altOn())camTo(A.acts[i].view,force)}}
+/* the owner 10-23 (Yom Kippur opening: Sinai -> Golan too fast): a whole-war page may set whole.slow_cam - the camera then moves in 2.2 s (was 1.1) and holds each view at least 6 s, the latest act's view wins after the hold; a seek moves at once */
+function camTo(v,force){if(!(D.whole&&D.whole.slow_cam)||force||!A.camAt){progView(v);A.camAt=Date.now();return}
+  var wait=6000-(Date.now()-A.camAt);clearTimeout(A.camT);
+  if(wait<=0){progView(v,2.2);A.camAt=Date.now();return}
+  A.camT=setTimeout(function(){if(A.follow&&A.playing){progView(A.acts[actAt(A.T)].view,2.2);A.camAt=Date.now()}},wait)}
+function actAt(T){var r=0;A.acts.forEach(function(a,i){if(T>=a.s)r=i});return r}
+function toggleAnim(on){A.on=on;$('bAnim').textContent=on?'תצוגה סטטית':'אנימציה';$('bAnim').setAttribute('aria-pressed',String(on));document.body.classList.toggle('anim',on);$('animui').hidden=!on;$('hud').hidden=!on;setTimeout(function(){map.invalidateSize();chkRot()},30);
+  if(on){['pCards','pLeg','pCredit'].forEach(function(x){$(x).classList.remove('open')});['bCards','bLeg','bCredit'].forEach(function(x){$(x).setAttribute('aria-pressed','false')});document.body.classList.remove('sheet-open');stop();
+    D.events.forEach(function(e){if(map.hasLayer(layers[e.id]))map.removeLayer(layers[e.id])});A.E.g.addTo(map);A.cur=-1;A.nextSfx=0;
+    A.prog=true;map.fitBounds(A.view0,{paddingTopLeft:[10,padT()],paddingBottomRight:[10,padB()],animate:false});A.prog=false;map.fire('zoomend');if(A.starts&&A.T<1&&A.starts.length)A.T=Math.max(0,D.whole.start_T!=null?D.whole.start_T:A.starts[0]-1.5);renderA();gotoAct(true);playA(1)}
+  else{pauseA();map.removeLayer(A.E.g);setTimed(timed)}}
+function playA(d){if(A.logPause)logPause(false,true);if(A.folPref!=='off'&&!A.dlOff&&!A.follow&&A.inited){setFollow(true);gotoAct(true)}A.dir=d||1;A.playing=true;updPlay();A.last=performance.now();cancelAnimationFrame(A.raf);if(A.T>=A.DUR&&A.dir===1){A.T=0;A.nextSfx=0}if(A.T<=0&&A.dir===-1)A.T=A.DUR;A.raf=requestAnimationFrame(tickA)}
+function pauseA(){A.playing=false;updPlay();cancelAnimationFrame(A.raf)}
+function updPlay(){document.body.classList.toggle('pz',!A.playing);var t=(A.playing&&A.dir===1)?'❚❚':'▶';var p2=document.getElementById('aPlay2');if(p2)p2.textContent=t;$('aPlay').textContent=(A.playing&&A.dir===1)?'❚❚':'▶';$('aRev').textContent=(A.playing&&A.dir===-1)?'❚❚':'◀'}
+function seekA(T){A.camAt=0;clearTimeout(A.camT);A.T=clamp(T,0,A.DUR);A.nextSfx=0;while(A.nextSfx<A.sfx.length&&A.sfx[A.nextSfx][0]<=A.T)A.nextSfx++;renderA();gotoAct(false);tick(.4)}
+function stepEvent(d){var i=actAt(A.T),cur=A.acts[i];var j=d>0?Math.min(A.acts.length-1,i+1):(A.T-cur.s>1.5?i:Math.max(0,i-1));pauseA();seekA(A.acts[j].s+0.01);playA(1);A.cur=j;A.altOff=A.T+12;if(typeof camTo==='function')camTo(A.acts[j].view,true);else progView(A.acts[j].view,.9)}/* the owner 10-26: the next/previous-event click jumps AND starts playing from there (a later pause by the visitor stays paused) and the camera flies to the event's view (it beats the follow camera for this jump) */
+function setSpeed(d){var i=SPEEDS.indexOf(A.sp);i=clamp(i+d,0,SPEEDS.length-1);A.sp=SPEEDS[i];$('aSp').textContent=A.sp+'×';updSnd()}
+function idleGain(){if(!A.starts||A.dir!==1)return 1;var n=A.starts.length,i=0;while(i<n&&A.starts[i]<=A.T)i++;return(i<n&&A.starts[i]-A.T>6)?8:1}
+/* ---- the owner 10-26: auto return to the camera follow when the action is off the visitor's screen. "Action" = the visible markers of the running scene (fallback: the current act's view). Off screen for >3 scene-seconds AND the visitor idle >2 s (no drag/pinch/wheel/touch) -> follow back on, same flight as the follow zoom. Never when: follow was turned off on purpose (button, saved apr67fol=off), a deep link set the view (A.dlOff), a still frame, an area chip is selected, paused/seeking (scene time does not run), or <8 s since the last auto return (no flip-flop). ---- */
+var AR={gAt:0,offT:null,lastAuto:-1e9,n:0};
+function arTouch(){AR.gAt=performance.now()}
+function arOn(){return A.on&&A.playing&&A.dir===1&&A.folPref!=='off'&&!A.dlOff&&!A.follow&&SEL==='all'&&!document.body.classList.contains('still')&&!NOAR}
+function actionOff(){var B=map.getBounds(),any=false,seen=false,e=A.E&&A.E.s;if(e)for(var k in e){var m=e[k];if(!m||!m._map||!m._icon||!m.getLatLng)continue;if(+m._icon.style.opacity===0&&m._icon.style.opacity!=='')continue;seen=true;if(B.contains(m.getLatLng())){any=true;break}}
+  if(seen)return !any;var a=A.acts[A.cur>=0?A.cur:actAt(A.T)];if(!a||!a.view)return false;return !B.intersects(L.latLngBounds(a.view))}
+function arCheck(now){if(!arOn()){AR.offT=null;return}if(A.prog||map._animatingZoom||now-AR.gAt<2000||now-AR.lastAuto<8000){return}
+  if(!actionOff()){AR.offT=null;return}if(AR.offT==null){AR.offT=A.T;return}
+  if(A.T-AR.offT>=3){AR.offT=null;AR.lastAuto=now;AR.n++;setFollow(true);gotoAct(true);evw('follow_toggle','auto_return')}}
+var NOAR=/[?&]autoreturn=0/.test(location.search);
+function tickA(now){if(!A.playing)return;var dt=Math.min(.1,(now-A.last)/1000);A.last=now;var T0=A.T;A.T+=dt*A.sp*A.dir*idleGain();if((A.fr=(A.fr|0)+1)%15===0)arCheck(now);
+  if(A.T>=A.DUR&&A.dir===1){A.T=A.DUR;renderA();pauseA();return}if(A.T<=0&&A.dir===-1){A.T=0;renderA();pauseA();return}
+  if(A.dir===1){while(A.nextSfx<A.sfx.length&&A.sfx[A.nextSfx][0]<=A.T){if(A.sfx[A.nextSfx][0]>T0-.001)sfx(A.sfx[A.nextSfx][1]);A.nextSfx++}}
+  else{A.nextSfx=0;while(A.nextSfx<A.sfx.length&&A.sfx[A.nextSfx][0]<=A.T)A.nextSfx++;if(Math.floor(A.T*2)!==Math.floor(T0*2))tick(.25)}
+  renderA();gotoAct(false);A.raf=requestAnimationFrame(tickA)}
+function hhmm2(){return ''}
+/* ---- WebAudio synthesis: no files. Master gain 0.22 (about -13 dB), nothing above that. Muted above 4x and while running backwards (soft ticks only). ---- */
+function audioOK(){return A.ctx&&A.ctx.state==='running'&&!A.muted}
+function toggleSound(auto){try{if(!A.ctx){var C=window.AudioContext||window.webkitAudioContext;if(C){A.ctx=new C();A.master=A.ctx.createGain();A.master.gain.value=0.22;A.master.connect(A.ctx.destination)}}
+  if(A.ctx&&A.ctx.resume)A.ctx.resume();A.muted=auto?false:!A.muted;if(!auto){try{localStorage.setItem('apr67snd',A.muted?'off':'on')}catch(e){}}if(auto&&!A.ctx)A.muted=true;if(auto&&A.ctx&&A.ctx.state!=='running'){setTimeout(function(){if(!A.ctx||A.ctx.state!=='running'){A.muted=true;updSnd()}},1800)}}catch(e){A.muted=true}updSnd()}
+function sndToast(on){var e=$('sndToast');if(!e){e=document.createElement('div');e.id='sndToast';e.className='sndtoast';e.setAttribute('role','status');e.hidden=true;e.textContent=(window.parent!==window)?'🔇 הקישו על המפה להפעלת סאונד':'🔇 הקישו בכל מקום להפעלת סאונד';document.body.appendChild(e)}clearTimeout(A.toastT);e.hidden=!on||!A.muted||A.pref==='off'||!!/[?&]still=/.test(location.search);if(!e.hidden)A.toastT=setTimeout(function(){e.hidden=true},14000)}
+function updSnd(){var b=$('aSnd'),m=$('aSndM');b.textContent=A.muted?'🔇':'🔊';b.setAttribute('aria-pressed',String(!A.muted));if(m){m.textContent=b.textContent;m.setAttribute('aria-pressed',String(!A.muted))}$('sndHint').hidden=!(A.muted&&A.pref!=='off')||!A.on||document.body.classList.contains('intro');if(!A.muted){var te=$('sndToast');if(te)te.hidden=true}$('sndHint').textContent=A.sp>4?'סאונד מושתק במהירות גבוהה':'הקישו להפעלת סאונד';if(!A.muted&&A.sp>4)$('sndHint').hidden=false}
+function noise(dur,f0,f1,q,g,type){var c=A.ctx,n=c.sampleRate*dur,buf=c.createBuffer(1,n,c.sampleRate),d=buf.getChannelData(0);for(var i=0;i<n;i++)d[i]=(Math.random()*2-1)*Math.pow(1-i/n,2);var s=c.createBufferSource();s.buffer=buf;var f=c.createBiquadFilter();f.type=type||'lowpass';f.frequency.setValueAtTime(f0,c.currentTime);f.frequency.exponentialRampToValueAtTime(Math.max(40,f1),c.currentTime+dur);f.Q.value=q||1;var gn=c.createGain();gn.gain.value=g;s.connect(f);f.connect(gn);gn.connect(A.master);s.start()}
+function tone(f0,f1,dur,g,type){var c=A.ctx,o=c.createOscillator(),gn=c.createGain();o.type=type||'sine';o.frequency.setValueAtTime(f0,c.currentTime);o.frequency.exponentialRampToValueAtTime(Math.max(30,f1),c.currentTime+dur);gn.gain.setValueAtTime(g,c.currentTime);gn.gain.exponentialRampToValueAtTime(0.0001,c.currentTime+dur);o.connect(gn);gn.connect(A.master);o.start();o.stop(c.currentTime+dur+.02)}
+function tick(g){if(!audioOK()||A.sp>4)return;try{tone(900,700,.04,g*.12,'square')}catch(e){}}
+function sfx(k){if(!audioOK()||A.sp>4||A.dir<0)return;var r=Math.min(A.sp,2);try{
+  if(k==='mg'){for(var i=0;i<4;i++)setTimeout(function(){if(A.ctx)noise(.07,2600,500,1,.32,'bandpass')},i*70/r)}
+  else if(k==='mortar'){noise(.5,420,60,1,.55,'lowpass');tone(90,40,.4,.35)}
+  else if(k==='cannon'){noise(.18,1800,300,1,.5,'lowpass');tone(160,60,.2,.25,'triangle')}
+  else if(k==='thud'){tone(75,35,.35,.5);noise(.3,300,50,1,.35,'lowpass')}
+  else if(k==='jet'){noise(1.8/r,500,2200,.7,.28,'bandpass')}
+  else if(k==='whistle'){tone(2200,700,.9/r,.1,'sine')}
+  else if(k==='boom'){noise(.9,700,45,1,.7,'lowpass');tone(70,32,.6,.55)}
+  else if(k==='beep'){tone(1500,1500,.09,.16,'square');setTimeout(function(){if(A.ctx)tone(1500,1500,.09,.16,'square')},150)}
+  else if(k==='missile'){noise(1/r,3500,700,.8,.25,'highpass')}
+  else if(k==='pop'){noise(.25,1500,200,1,.5,'lowpass')}
+  else if(k==='flag'){tone(523,659,.4,.07,'sine')}
+  else if(k==='fall'){tone(1500,320,1.1,.09,'sine')}
+  else if(k==='crash'){noise(1.1,900,60,1,.6,'lowpass');tone(400,60,.9,.18,'sawtooth')}
+ }catch(e){}}
+/* ---- render: a pure function of A.T, so scrubbing, reverse and speed are exact ---- */
+/* the explanation is a LOG: every caption that has happened stays (scroll up to re-read), the newest slides in from the side and the list follows the scrubber and reverse exactly */
+/* ===== casualties in the animation (the owner 10-18): same figures, languages and labels as the cards on the page; what is KNOWN so far, never a total ===== */
+function casSym(){/* the owner 10-19: round face with X eyes and a flat mouth, own drawing (replaces the ribbon A of 10-18) */
+  return '<svg viewBox="0 0 16 16" aria-hidden="true"><circle cx="8" cy="8" r="7.4" fill="#333"/><path d="M4.5 5.2l2.4 2.4M6.9 5.2L4.5 7.6M9.1 5.2l2.4 2.4M11.5 5.2L9.1 7.6M5.3 11.3h5.4" fill="none" stroke="#fff" stroke-width="1.25" stroke-linecap="round"/></svg>'}
+function casEv(){return (D&&D.casualties)||[]}
+function casPass(c){return SEL==='all'||!c.area||c.area==='all'||c.area===SEL}
+function casLine(c){return '<b class="csym" role="img" aria-label="נפגעים" title="נפגעים">'+casSym()+'</b><div>ישראל: '+esc(c.il)+(c.ilsec?'<small>בשפות אחרות, לא הנתון שלנו: '+esc(c.ilsec)+'</small>':'')+'</div><div>הצד השני: '+esc(c.ar)+(c.arsec?'<small>בעברית: '+esc(c.arsec)+'</small>':'')+'</div>'+(c.oth?'<div>צד שלישי (לא צד בלחימה): '+esc(c.oth)+'</div>':'')+'<a href="#" data-cas="'+c.id+'">לציטוטים ↗</a>'}
+function casIn(e){return (e.cas&&e.cas.length)?e.cas.map(function(c){return '<div class="cas-in">'+casLine(c)+'</div>'}).join(''):''}
+/* the owner 10-19: a casualty marker leaves the map 2 SIMULATION hours after it appeared (small smoke puff). The animation clock is compressed, so simulated minutes are read off the act clock labels (07:45, כ-08:00, בצהריים ...), piecewise-linear between acts; unlabeled acts are interpolated. Only the map marker goes: the log, table, cards, popup and counters keep every figure. */
+function simPts(){if(A.smp)return A.smp;var W=[['אחר הצהריים',930],['לפנות בוקר',300],['עם שחר',330],['בצהריים',750],['צהריים',750],['בבוקר',480],['בוקר',480],['הערב',1140],['ערב',1140],['בלילה',1320],['חצות',1440]],ac=A.acts||[],pts=[],prev=-1;
+  ac.forEach(function(a){var c=String(a.clock||'').split('·')[0],m=null,t=c.match(/(\d{1,2}):(\d{2})/);if(a.min!==undefined&&a.min!==null){m=a.min;prev=m;pts.push({T:a.s,m:m});return}if(t)m=+t[1]*60+ +t[2];else for(var i=0;i<W.length;i++)if(c.indexOf(W[i][0])>=0){m=W[i][1];break}
+    if(m!==null){if(prev>=0&&m<prev-300)m+=1440;prev=m}pts.push({T:a.s,m:m})});
+  var k=pts.map(function(q,i){return q.m!==null?i:-1}).filter(function(i){return i>=0});if(!k.length){A.smp=[];return A.smp}
+  for(var i=0;i<pts.length;i++)if(pts[i].m===null){var lo=-1,hi=-1;for(var j=i-1;j>=0;j--)if(pts[j].m!==null){lo=j;break}for(var j2=i+1;j2<pts.length;j2++)if(pts[j2].m!==null){hi=j2;break}
+    if(lo>=0&&hi>=0)pts[i].mi=pts[lo].m+(pts[hi].m-pts[lo].m)*(pts[i].T-pts[lo].T)/(pts[hi].T-pts[lo].T);else if(lo>=0)pts[i].mi=pts[lo].m+(pts[i].T-pts[lo].T)*.7;else pts[i].mi=pts[hi].m-(pts[hi].T-pts[i].T)*.7}
+  var mx=-1e9;pts.forEach(function(q,i){var v=q.m!==null?q.m:q.mi;if(v<mx)v=mx+.01;mx=v;q.v=v});
+  var end=ac.length?ac[ac.length-1].e:0,L=pts[pts.length-1];pts.push({T:end,v:L.v+Math.max(20,(end-L.T)*.7)});A.smp=pts;return pts}
+function simMin(T){var p=simPts();if(!p.length)return null;if(T<=p[0].T)return p[0].v;for(var i=1;i<p.length;i++)if(T<=p[i].T)return p[i-1].v+(p[i].v-p[i-1].v)*(T-p[i-1].T)/Math.max(1e-6,p[i].T-p[i-1].T);return p[p.length-1].v}
+function simT(m){var p=simPts();if(!p.length)return null;if(m>=p[p.length-1].v)return null;for(var i=1;i<p.length;i++)if(m<=p[i].v)return p[i-1].T+(p[i].T-p[i-1].T)*(m-p[i-1].v)/Math.max(1e-6,p[i].v-p[i-1].v);return null}
+function casEnd(c){if(!ICONS)return null;if(c._te===undefined){var m=simMin(c.t);c._te=m===null?null:simT(m+120)}return c._te}
+function smokePuff(c,m){if(matchMedia('(prefers-reduced-motion: reduce)').matches||!c.at||!A.E||!A.E.g)return;var ix=c._ix||0,pm=L.marker(c.at,{icon:L.divIcon({className:'',html:'<span class="smoke"><i></i><i></i><i></i></span>',iconSize:[0,0],iconAnchor:[-8-30*ix,34]}),interactive:false,keyboard:false}).addTo(A.E.g);setTimeout(function(){try{A.E.g.removeLayer(pm)}catch(e){}},1100)}
+function updCas(T){var all=casEv();if(!all.length)return;var P=$('casP');if(!P)return;
+  if(!A.casInit){A.casInit=1;P.hidden=false;var sm=P.querySelector('summary');if(sm)sm.innerHTML='<span class="csym" role="img" aria-label="נפגעים (לפי הנתונים שנמסרו)" title="נפגעים">'+casSym()+'</span>&nbsp; לפי הנתונים שנמסרו';var lgp=$('pLeg');if(lgp){var sp2=document.createElement('span');sp2.className='lg';sp2.innerHTML='<span class="csym">'+casSym()+'</span> = נפגעים - הרוגים ופצועים, לפי הנתונים שנמסרו (הפירוט והציטוטים: „לציטוטים”). הסמל על המפה מופיע בזמן האירוע'+(ICONS?' ונעלם מהמפה אחרי שעתיים (זמן בסימולציה), בענן עשן קטן. הנתונים נשארים ביומן, בלוח ובחלון הלחיצה':' ונשאר עד סוף האנימציה')+'; אירוע שהמקור לא נותן לו מקום אינו מסומן במפה, רק ביומן ובלוח.';lgp.appendChild(sp2);var sp3=document.createElement('span');sp3.className='lg';sp3.innerHTML='<span style="display:inline-block;vertical-align:middle;width:18px;height:18px">'+TANK.replace(/CLR/g,'#1d5ea8')+'</span> טנק עם צריח קטן שמתנדנד = כוחות שריון בתנועה (סכמטי). חי"ר = עקבות מגפיים.';lgp.appendChild(sp3)}if(innerWidth>=900)P.open=true;var cnt={};A.casM=all.map(function(c){if(!c.at||!A.E||!A.E.g)return null;var ck=c.at.join(','),ix=cnt[ck]=(cnt[ck]===undefined?0:cnt[ck]+1);c._ix=ix;var m=L.marker(c.at,{icon:L.divIcon({className:'',html:'<span class="cbadge" role="img" aria-label="נפגעים: '+esc(c.name)+'" title="נפגעים: '+esc(c.name)+' (לחצו לפירוט)">'+casSym()+'</span>',iconSize:[0,0],iconAnchor:[-8-30*ix,34]}),opacity:0,keyboard:false}).addTo(A.E.g);m.bindPopup('<div dir="rtl" style="font-size:13px;line-height:1.5"><b>'+esc(c.clock)+' · '+esc(c.name)+'</b><br>'+casLine(c)+'</div>');return m})}
+  var pas=all.filter(function(c){return c.t<=T&&casPass(c)}),key=pas.map(function(c){return c.id}).join(',')+'|'+SEL;
+  all.forEach(function(c,i){var m=A.casM&&A.casM[i];if(m){var te=casEnd(c),on=c.t<=T&&(te===null||T<te);if(te!==null&&A.cT!=null&&casPass(c)&&A.cT<te&&T>=te&&T>A.cT&&T-A.cT<2.5)smokePuff(c,m);m.setOpacity(on?(casPass(c)?1:.25):0);if(m.getElement())m.getElement().style.pointerEvents=on?'':'none'}});A.cT=T;
+  if(A.casKey===key)return;A.casKey=key;
+  function side(k,sk,box,hd,lab){var have=pas.filter(function(c){return c[k]!=='לא צוין'}).length,h='';pas.forEach(function(c){var none=c[k]==='לא צוין';h+='<div class="cl"><span class="tm">'+esc(c.clock)+'</span> '+esc(c.name)+': '+(none?'<span class="none">לא צוין</span>':esc(c[k]))+(c[sk]?'<small>'+(k==='il'?'בשפות אחרות, לא הנתון שלנו: ':'בעברית: ')+esc(c[sk])+'</small>':'')+' <a href="#" data-cas="'+c.id+'">↗</a></div>'});
+    $(hd).textContent=lab+(pas.length?' · יש דיווח ב-'+have+' מתוך '+pas.length+' אירועים שחלפו':' · עדיין אין אירוע');$(box).innerHTML=h}
+  side('il','ilsec','casIL','casILh','ישראל');side('ar','arsec','casAR','casARh','הצד השני');var oth=pas.filter(function(c){return c.oth});if(oth.length){var ob=$('casAR');ob.innerHTML+='<div class="cph">צד שלישי (לא צד בלחימה)</div>'+oth.map(function(c){return '<div class="cl"><span class="tm">'+esc(c.clock)+'</span> '+esc(c.name)+': '+esc(c.oth)+' <a href="#" data-cas="'+c.id+'">↗</a></div>'}).join('')}var b=$('casAR');if(b&&b.lastElementChild)b.parentNode.scrollTop=P.scrollTop}
+document.addEventListener('click',function(ev){var a=ev.target.closest&&ev.target.closest('a[data-cas]');if(!a)return;ev.preventDefault();var id=a.getAttribute('data-cas');if(window.parent&&window.parent!==window){try{window.parent.postMessage({warCas:id},'*')}catch(e){}}else location.href='../#cas-'+id});
+function logEntries(){if(A.log)return A.log;A.log=[];if(A.scene&&A.scene.log){A.scene.log.forEach(function(e){A.log.push({t:e.t,clock:e.clock,q:e.q,n:e.n,area:e.area,src:e.src,href:e.href,hcur:e.hcur})})}else A.acts.forEach(function(a){a.caps.forEach(function(c){A.log.push({t:a.s+c[0],clock:a.clock,q:c[1],n:c[2]})})});A.log.sort(function(x,y){return x.t-y.t});A.log.forEach(function(e){e.cas=casEv().filter(function(c){return c.t===e.t&&(!c.area||!e.area||c.area===e.area)})});return A.log}
+function updLog(T){logInit();updCas(T);var L2=logEntries().filter(function(e){return SEL==='all'||!e.area||e.area==='all'||e.area===SEL}),n=0;while(n<L2.length&&L2[n].t<=T)n++;var box=$('cap');if(A.logN===undefined)A.logN=0;
+  if(A.logSel!==SEL){box.innerHTML='';A.logN=0;A.logSel=SEL;if(A.logPause)logPause(false)}
+  if(n===A.logN)return;var near=box.scrollHeight-box.scrollTop-box.clientHeight<60;
+  if(n<A.logN){while(box.children.length>n)box.removeChild(box.lastChild)}
+  else{for(var i=A.logN;i<n;i++){var d=document.createElement('div');d.className='ev'+((n-A.logN===1&&A.playing&&A.dir===1)?' new':'');d.dataset.t=L2[i].t;d.tabIndex=0;d.title='לחיצה: קפיצה לרגע הזה במפה';d.innerHTML='<span class="tm">'+(L2[i].href?'<a class="tml" href="'+esc(L2[i].href)+'" target="_blank" rel="noopener" title="'+(L2[i].hcur?'הקטע המתאים בנוסח הנוכחי של הערך (הכרטיס שלנו מסכם אותו; נפתח בלשונית חדשה)':'הקטע במקור (נפתח בלשונית חדשה)')+'">'+esc(L2[i].clock)+'</a>':esc(L2[i].clock))+'</span><q>'+esc(L2[i].q)+'</q><small>'+esc(L2[i].n)+'</small>'+(L2[i].src?'<small class="srcl">מקור: '+esc(L2[i].src.s||L2[i].src.t)+(L2[i].src.p?', עמ׳ '+esc(String(L2[i].src.p)):'')+'</small>':'')+casIn(L2[i]);box.appendChild(d)}}
+  [].forEach.call(box.children,function(c,i){c.classList.toggle('last',i===n-1)});var jump=Math.abs(n-A.logN)>1||!A.playing;A.logN=n;
+  logScroll(jump)}
+/* the owner 10-19: the log follows the simulation (active entry kept in view, smooth; scrub/rewind/speed exact). A hand scroll pauses it and shows "חזרה לאירוע הנוכחי"; play, the slider or that button resume it. Reduced motion = instant. */
+function logScroller(){var b=$('cap');return b.scrollHeight>b.clientHeight+2?b:$('infop')}
+function logScroll(instant){if(A.logPause)return;var b=$('cap'),el=b.querySelector('.last')||b.lastElementChild;if(!el)return;var s=logScroller(),rs=s.getBoundingClientRect(),re=el.getBoundingClientRect(),off=re.height>s.clientHeight*.6?10:s.clientHeight*.3,top=s.scrollTop+(re.top-rs.top)-off;
+  s.scrollTo({top:Math.max(0,top),behavior:(instant||matchMedia('(prefers-reduced-motion: reduce)').matches)?'auto':'smooth'})}
+function logPause(on,instant){A.logPause=on;var bt=$('logBack');if(bt)bt.hidden=!on;if(!on)logScroll(!!instant)}
+/* the owner 10-19: pressing a log entry seeks the simulation to that event (no popup; play/pause state kept; follow camera respected; links inside the entry still work). The day-page timeline sends {warSeekMin} (minutes of the day), turned into animation time through the act clock labels. */
+function seekTo(T){if(T===null||T===undefined||isNaN(T))return;A.seekFocus=1;if(!A.follow)setFollow(true,false);seekA(T);gotoAct(true);A.seekFocus=0;logScroll(true)}
+function logClick(){var b=$('cap');if(!b||A.logClk)return;A.logClk=1;function go(ev){if(ev.target.closest&&ev.target.closest('a,button'))return;var e=ev.target.closest&&ev.target.closest('.ev');if(!e||e.dataset.t===undefined)return;if(ev.type==='keydown'&&ev.key!=='Enter')return;seekTo(+e.dataset.t)}b.addEventListener('click',go);b.addEventListener('keydown',go);addEventListener('message',function(ev){if(ev.data&&ev.data.warSeekMin!==undefined){var m=+ev.data.warSeekMin;if(m>0&&A.acts){var t=simT(m);if(t!==null)seekTo(t)}}})}
+function logInit(){logClick();if(!A.dcInit){A.dcInit=1;map.on('zoomend moveend',function(){setTimeout(function(){declutter(true)},60)});map.on('zoomend',function(){A.finZ=null;try{renderA()}catch(e){}})}if(A.logInit)return;A.logInit=1;var bt=$('logBack');if(bt)bt.addEventListener('click',function(){logPause(false)});[$('cap'),$('infop')].forEach(function(e){if(!e)return;['wheel','touchmove'].forEach(function(n){e.addEventListener(n,function(){logPause(true)},{passive:true})});e.addEventListener('pointerdown',function(ev){if(ev.target===e)logPause(true)});e.addEventListener('keydown',function(ev){if(/^(ArrowUp|ArrowDown|PageUp|PageDown|Home|End| )$/.test(ev.key))logPause(true)})});var sl=$('aT');if(sl)sl.addEventListener('input',function(){if(A.logPause)logPause(false,true)})}
+/* One plane, one life: spawn at its base (grow + fade in), legs along schematic tracks (orbit = loiter), land back at its base (shrink + fade out), gone. Pure function of T, so reverse is exact. */
+/* the owner 10-26 shot-down aircraft: a fly item with down={t,at,dur,spin?} (t = hit time in scene seconds, at = crash point, both only where the source says the aircraft was shot down; the place is ours = approximate). From t the aircraft trails smoke, keeps its heading (a slow spin only while falling), loses horizontal speed and shrinks (altitude cue on a flat map), then a burst, and a small wreck mark stays. Under reduced motion: no arc, only the crash mark. */
+var RMOT=!!(window.matchMedia&&matchMedia('(prefers-reduced-motion:reduce)').matches);
+function downMarks(key,down,T,vis){var tc=down.t+down.dur,cr=dot(key+'cr','boom',46);var f=(T-tc)/1.6;if(vis&&f>0&&f<1){cr.setLatLng(down.at);op(cr,1-f*.6);sc(cr,1.4*(0.4+f*1.1))}else op(cr,0);var w=dot(key+'wr','wreck',12);if(vis&&T>=(RMOT?down.t:tc)){w.setLatLng(down.at);op(w,.75);}else op(w,0)}
+function fly(key,clr,label,legs,T,off,down){var m=plane(key,clr,label),t0=legs[0].t0,t1=legs[legs.length-1].t1;
+  if(down){var tc=down.t+down.dur;if(T<t0||T>tc){op(m,0);trail(key+'sm',null,'smoke',0);downMarks(key,down,T,T>tc);return null}}
+  if(!down&&(T<t0||T>t1)){op(m,0);return null}
+  var Tq=down&&T>down.t?down.t:T,p=null,h=0,k=0;for(k=0;k<legs.length;k++){var L3=legs[k];if(Tq>=L3.t0&&Tq<=L3.t1){if(L3.orbit){var w=(T-L3.t0)*1.6;p=[L3.orbit[0]+Math.sin(w)*0.02,L3.orbit[1]+Math.cos(w)*0.025]}else{var q=pathPos(L3.path,ease((Tq-L3.t0)/(L3.t1-L3.t0)));p=q.p;h=q.h}break}
+    if(Tq>L3.t1&&(k+1>=legs.length||Tq<legs[k+1].t0)){p=L3.orbit?[L3.orbit[0],L3.orbit[1]+0.025]:pathPos(L3.path,1).p;h=L3.orbit?0:pathPos(L3.path,1).h;break}}
+  if(!p){op(m,0);return null}var o=clamp((T-t0)/1,0,1)*(down?1:clamp((t1-T)/1,0,1));if(off)p=[p[0]+off[0],p[1]+off[1]];
+  if(down&&T>down.t){var f=clamp((T-down.t)/down.dur,0,1),e=1-(1-f)*(1-f),a=off?[down.at[0]+off[0],down.at[1]+off[1]]:down.at;
+    if(RMOT){op(m,0);trail(key+'sm',null,'smoke',0);downMarks(key,down,T,true);return p}
+    var q2=[lerp(p[0],a[0],e),lerp(p[1],a[1],e)];trail(key+'sm',[p,[lerp(p[0],q2[0],.5),lerp(p[1],q2[1],.5)],q2],'smoke',.85*(1-f*.4));
+    setPlane(m,q2,h+(down.spin==null?200:down.spin)*f,f<1?1:0,(.55+.45)*(1-.5*f));downMarks(key,down,T,false);return q2}
+  if(down){trail(key+'sm',null,'smoke',0);downMarks(key,down,T,false)}setPlane(m,p,h,o,.55+.45*o);return p}
+/* ===== data-driven scene (5 June and later battles): items from D.scene, same engine, controls, sounds and honesty rules as the April animation ===== */
+var TANK='<svg viewBox="0 0 30 30" width="19" height="19" aria-hidden="true"><rect x="4" y="3" width="6" height="24" rx="2" fill="#222"/><rect x="20" y="3" width="6" height="24" rx="2" fill="#222"/><rect x="8" y="5" width="14" height="20" rx="3" fill="CLR" stroke="#fff" stroke-width="1.2"/><g class="tur" style="transform-origin:15px 16px"><rect x="13.9" y="1" width="2.4" height="15" rx="1" fill="#fff" stroke="#222" stroke-width=".6"/><circle cx="15" cy="16" r="5.4" fill="CLR" stroke="#fff" stroke-width="1.2"/></g></svg>';
+
+/* ---- one icon per KIND of force (the owner 2026-10-19; own drawings, same top-down style as the tank; side colour CLR: blue Israel, red the other side). Used when the day's scene says icons:true (5 June first). ---- */
+var ICONS=false,TOUCH=!!(window.matchMedia&&matchMedia('(pointer:coarse)').matches)||('ontouchstart' in window),LEAD=6,SIDEC={il:'#1b8fae',ar:'#5a1230',neutral:'#7a7a7a'};
+var BASEG='<svg viewBox="0 0 24 24" width="20" height="20" style="vertical-align:middle" aria-hidden="true"><path d="M12 1 L14.2 9 L23 14 L23 16.5 L14 14 L13.4 20 L16 22 L16 23.5 L12 22.5 L8 23.5 L8 22 L10.6 20 L10 14 L1 16.5 L1 14 L9.8 9 Z" fill="#555" stroke="#fff" stroke-width="1"/></svg>';
+var KSVG={
+ msb:'<svg viewBox="0 0 30 30" width="22" height="22" aria-hidden="true"><path d="M15 1 C20.5 8 21.5 17 20 28.5 L10 28.5 C8.5 17 9.5 8 15 1 Z" fill="CLR" stroke="#fff" stroke-width="1.3" stroke-linejoin="round"/><rect x="10.6" y="11" width="3.2" height="8" rx=".9" fill="#222"/><rect x="16.2" y="11" width="3.2" height="8" rx=".9" fill="#222"/><rect x="13.7" y="21" width="2.6" height="4" rx=".8" fill="#fff" opacity=".9"/></svg>',
+ tor:'<svg viewBox="0 0 30 30" width="19" height="19" aria-hidden="true"><path d="M15 3 C18.6 9 19.2 19 18.2 28 L11.8 28 C10.8 19 11.4 9 15 3 Z" fill="CLR" stroke="#fff" stroke-width="1.3" stroke-linejoin="round"/><path d="M9.4 12 V21 M20.6 12 V21" stroke="#222" stroke-width="2.2" stroke-linecap="round"/><circle cx="15" cy="17" r="2" fill="#fff" opacity=".9"/></svg>',
+ mine:'<svg viewBox="0 0 30 30" width="22" height="22" aria-hidden="true"><path d="M15 2 C22 8 23 19 21 26 L9 26 C7 19 8 8 15 2 Z" fill="CLR" stroke="#fff" stroke-width="1.3" stroke-linejoin="round"/><path d="M9 26 L3.5 29 M21 26 L26.5 29" stroke="#222" stroke-width="2" stroke-linecap="round"/><circle cx="3.5" cy="29" r="1.7" fill="#222"/><circle cx="26.5" cy="29" r="1.7" fill="#222"/><rect x="12" y="12" width="6" height="7" rx="1.2" fill="#fff" opacity=".9"/></svg>',
+ lcr:'<svg viewBox="0 0 30 30" width="20" height="20" aria-hidden="true"><path d="M6 6 L24 6 L22 28.5 L8 28.5 Z" fill="CLR" stroke="#fff" stroke-width="1.3" stroke-linejoin="round"/><rect x="5.5" y="1.8" width="19" height="5" rx="1" fill="#222"/><rect x="10" y="12" width="10" height="11" rx="1.2" fill="#fff" opacity=".9"/></svg>',
+ shp:'<svg viewBox="0 0 30 30" width="24" height="24" aria-hidden="true"><path d="M15 0.8 C21 6 22 14 21.6 29 L8.4 29 C8 14 9 6 15 0.8 Z" fill="CLR" stroke="#fff" stroke-width="1.3" stroke-linejoin="round"/><rect x="11.6" y="15" width="6.8" height="8" rx="1.2" fill="#fff" opacity=".9"/><circle cx="15" cy="11" r="2.2" fill="#222"/><path d="M4 29.5 Q8.5 27 13 29.5 T21 29.5 T26 29.5" stroke="#fff" stroke-width="1.1" fill="none"/></svg>',
+ inf:'<svg viewBox="0 0 30 30" width="23" height="23" aria-hidden="true"><circle cx="15" cy="7.5" r="4.6" fill="CLR" stroke="#fff" stroke-width="1.4"/><path d="M7 27 L9.5 15 Q15 12 20.5 15 L23 27 Z" fill="CLR" stroke="#fff" stroke-width="1.4" stroke-linejoin="round"/></svg>',
+ apc:'<svg viewBox="0 0 30 30" width="21" height="21" aria-hidden="true"><rect x="3" y="4" width="4.5" height="22" rx="1.6" fill="#222"/><rect x="22.5" y="4" width="4.5" height="22" rx="1.6" fill="#222"/><rect x="6" y="3" width="18" height="24" rx="4" fill="CLR" stroke="#fff" stroke-width="1.2"/><rect x="9" y="6" width="12" height="7" rx="1.5" fill="#fff" opacity=".9"/><circle cx="15" cy="20" r="3.2" fill="#fff" opacity=".9"/></svg>',
+ art:'<svg viewBox="0 0 30 30" width="24" height="24" aria-hidden="true"><path d="M15 20 L9.5 28.5 M15 20 L20.5 28.5" stroke="#222" stroke-width="2.2" stroke-linecap="round"/><rect x="13.5" y="4" width="3" height="15.5" rx="1" fill="#222" stroke="#fff" stroke-width=".7"/><rect x="11.8" y="0.8" width="6.4" height="4.2" rx="1" fill="#222" stroke="#fff" stroke-width=".7"/><rect x="4.5" y="16" width="4.5" height="10" rx="1.6" fill="#222"/><rect x="21" y="16" width="4.5" height="10" rx="1.6" fill="#222"/><rect x="8.5" y="15" width="13" height="5" rx="1.4" fill="CLR" stroke="#fff" stroke-width="1.2"/></svg>',
+ nav:'<svg viewBox="0 0 30 30" width="23" height="23" aria-hidden="true"><path d="M15 1.5 C22 8 23 19 21 28 L9 28 C7 19 8 8 15 1.5 Z" fill="CLR" stroke="#fff" stroke-width="1.3"/><rect x="11.8" y="12" width="6.4" height="8" rx="1.2" fill="#fff" opacity=".9"/><path d="M5 29 Q9 26.5 13 29 T21 29 T27 29" stroke="#fff" stroke-width="1.2" fill="none"/></svg>',
+ heli:'<svg viewBox="0 0 30 30" width="24" height="24" aria-hidden="true"><ellipse cx="15" cy="14" rx="4.4" ry="9" fill="CLR" stroke="#fff" stroke-width="1.3"/><rect x="13.7" y="21" width="2.6" height="8" rx="1" fill="CLR" stroke="#fff" stroke-width=".8"/><g class="hr"><path d="M2.5 14 H27.5 M15 1.5 V26.5" stroke="#222" stroke-width="2" stroke-linecap="round"/></g><circle cx="15" cy="14" r="2.1" fill="#fff"/></svg>'};
+var KNAME={inf:'חי"ר וצנחנים (רגלי)',apc:'נגמ"שים וזחל"מים',art:'ארטילריה ומרגמות',nav:'כלי שיט (טרפדות, נחתות)',msb:'ספינת טילים',tor:'טרפדת / סירת סיור',mine:'שולת מוקשים',lcr:'נחתת',shp:'ספינה',heli:'מסוקים',tank:'שריון (טנקים)'};
+function unitKind(label,trail,kd){if(kd)return kd;var s=label||'';if(/טרפד|נחתת|ספינ|סירת|אח["״]י|אוסה|קומאר|שולת|משחתת|שייטת/.test(s)){if(/שולת/.test(s))return 'mine';if(/נחתת/.test(s))return 'lcr';if(/טרפד|סירת/.test(s))return 'tor';if(/טיל|אח["״]י|אוסה|קומאר/.test(s))return 'msb';if(/ספינה|משחתת/.test(s))return 'shp';return 'nav'}if(!kd&&/טיל|טילי|רקטות|סאגר|גבריאל|סטיקס|פגז/.test(s)&&!/חיילים|חי"ר|חי״ר|צנחנים|קומנדו|גל /.test(s))return null;/* a missile/rocket arrow is a dot, never a soldier (the owner 10-26: foot soldiers on the sea were Styx/Gabriel arrows with a foot trail) */if(/חיילים|נסיגה סורית/.test(s))return 'inf';if(/(^|\s)מסוק(?!ים)/.test(s))return 'heli';/* the helicopter itself, not "נחיתת מסוקים" / "שחולצו מהמסוקים" (infantry) */if(/חרמ"ש|זחל"ם|זחלמ|נגמ"ש/.test(s))return 'apc';if(/תותח|ארטיל|מרגמ|סוללה/.test(s))return 'art';if(trail==='foot'||/חי"ר|צנחנים/.test(s))return 'inf';return null}
+/* the owner 10-19 icon proportions (px at scale 1; every ground icon then scales by the SAME zoom rule .gu): soldier 12 < gun 16 < APC 17 < tank 19 < boat 22 < helicopter 24 (aircraft 30) */
+var KSZ={inf:12,art:16,apc:17,nav:22,heli:24,msb:22,tor:19,mine:22,lcr:20,shp:24},NAVK={nav:1,msb:1,tor:1,mine:1,lcr:1,shp:1};   /* ships (the owner 10-25: "give the ships their own icons"): one flat top-down silhouette per TYPE - missile boat, torpedo boat, minesweeper, landing craft, other ship - same style and size rules as the other war icons; they rotate with their heading like the tank (bow up at 0) */function ksvg(kind,clr){return KSVG[kind].replace(/width="\d+" height="\d+"/,'width="'+KSZ[kind]+'" height="'+KSZ[kind]+'"').replace(/CLR/g,clr)}
+function kindM(key,kind,clr,label,dir){return spr(key,function(){var sz=KSZ[kind]||17;var m=L.marker([0,0],{icon:L.divIcon({className:'',html:'<span class="ap gu">'+((NAVK[kind]||kind==='heli')?'<span class="rot" style="display:block;width:'+sz+'px;height:'+sz+'px">'+ksvg(kind,clr)+'</span>':ksvg(kind,clr))+'</span>',iconSize:[sz,sz],iconAnchor:[sz/2,sz/2]}),interactive:true,opacity:0});if(label){m.bindTooltip(label,{permanent:true,direction:dir||'bottom',className:'tt unt',interactive:true})}popFor(m,popHtml((label||KNAME[kind]).replace(/\s*\(סכמטי\)\s*$/,''),KNAME[kind]+' (סכמטי): '+sideOf(clr)+'. הסמל והמסלול מצוירים, לא נתון מדויק. לפני שהכוח זז הוא מוצג בנקודת ההתחלה של המסלול הסכמטי; אחרי שהמשימה נגמרת הוא נשאר במקום שבו הסתיים המסלול עד סוף האנימציה.','ראו את האירוע המתאים ביומן'));return m})}
+function gunM(key,it,T){if(it._nx===undefined){var nx=1e9;(A.scene.items||[]).forEach(function(o){if(o.type==='shell'&&o!==it&&o.from[0]===it.from[0]&&o.from[1]===it.from[1]&&o.t0>it.t0&&o.t0<nx)nx=o.t0});it._nx=nx}var on=T>=it.t0-1&&T<it._nx-1,m=spr(key,function(){var c=it.side==='iaf'?'#1d5ea8':'#b3261e',mk=L.marker(it.from,{icon:L.divIcon({className:'',html:'<span class="ap gu">'+ksvg('art',c)+'</span>',iconSize:[KSZ.art,KSZ.art],iconAnchor:[KSZ.art/2,KSZ.art/2]}),interactive:true,opacity:0});popFor(mk,popHtml(KNAME.art,'ארטילריה ומרגמות (סכמטי): '+(it.side==='iaf'?'ישראל':'הצד השני')+'. נקודת הירי מצוירת, לא נתון מדויק.',clockAt(it.t0)));return mk});op(m,on?1:0);m.setLatLng(finLL('gun:'+it.from.join(','),it.from,1));var ge=m.getElement(),gs=ge&&ge.querySelector('svg');if(gs){var mdp=[lerp(it.from[0],it.to[0],.5)+(it.lift||.05)*1.9,lerp(it.from[1],it.to[1],.5)],a0=map.latLngToLayerPoint(it.from),a1=map.latLngToLayerPoint(quad(it.from,mdp,it.to,.08)),dg=Math.atan2(a1.x-a0.x,-(a1.y-a0.y))*180/Math.PI;gs.style.transformOrigin='50% 67%';gs.style.transform='rotate('+dg.toFixed(1)+'deg)'}}/* armour (the owner 10-18): a tank, hull along the heading of motion (same smoothed on-screen heading as the planes), a SMALL turret that sways about +-17 degrees around the direction of travel, only while the unit moves; sway is a pure function of the clock (scrub/reverse exact) */
+function tankM(key,clr,label,dir,hold){return spr(key,function(){var m=L.marker([0,0],{icon:L.divIcon({className:'',html:'<span class="ap gu"><span class="rot" style="display:block;width:19px;height:19px">'+TANK.replace(/CLR/g,clr)+'</span></span>',iconSize:[19,19],iconAnchor:[9.5,9.5]}),interactive:true,opacity:0});if(label){m.bindTooltip(label,{permanent:true,direction:dir||'bottom',className:'tt unt',interactive:true});popFor(m,popHtml(label.replace(/\s*\(סכמטי\)\s*$/,''),(hold?'כוח במקומו (סכמטי): ':'כוח שריון בתנועה (סכמטי): ')+sideOf(clr)+(hold?'. המקור מציין את מקום הכוח ואינו מתעד תנועה שלו מאז; הסמל נשאר בנקודה האחרונה המתועדת עד שמקור מציין נסיגה או השמדה. הנקודה המדויקת מצוירת, לא נתון מדויק.':'. הסמל והמסלול מצוירים, לא נתון מדויק.')+(ICONS?' לפני שהכוח זז הוא מוצג בנקודת ההתחלה של המסלול הסכמטי; אחרי שהמשימה נגמרת הוא נשאר במקום שבו הסתיים המסלול עד סוף האנימציה.':''),'ראו את האירוע המתאים ביומן'))}return m})}
+/* HEADING (the owner 10-25, "the tanks circle around themselves"): a ground unit turns toward its screen movement ONLY while it is on a leg (moving) and has moved at least 0.6 px (z10) since the last frame. Before it sets out, after it has arrived
+   (the final-spread easing, a few px) and on sub-pixel jitter it keeps its heading - the old 0.02 px / any-state rule turned a STATIONARY tank by 40-260 degrees on that jitter. Aircraft: 0.3 px (they never stand). */
+/* FACING (the owner 10-25: "every tank faces the enemy, or when moving its direction of movement; the Syrian tanks must face Israel"): a unit that is NOT on a leg (holding position / not yet set out / arrived) turns toward the NEAREST visible enemy ground unit
+   (re-evaluated every frame, the turn itself is smoothed), and with no enemy within ~165 km toward the side's front: Syrians west / Israelis east on the Golan, Egyptians east / Israelis west at the canal. Bearing in degrees clockwise from north = the sprite's rotation (the tank
+   sprite points up at 0). Moving units follow their travel (setTank above). */
+var NOFACE=/[?&]face=0/.test(location.search);   /* debug: ?face=0 keeps the old path-tangent heading, for before/after recordings */
+function faceBearing(m,p,st){var gp=A.gp||{},best=null,bd=1e9,bk=null,cur=null,cd=1e9,id=m._leaflet_id;for(var k in gp){var g=gp[k];if(k==id||!g.vis||!g.side||g.side===m._side||(A.rp|0)-g.rp>1)continue;var dl=g.p[0]-p[0],dn=(g.p[1]-p[1])*.84,dd=Math.hypot(dl,dn);if(dd<bd){bd=dd;best=g;bk=k}if(k==st.en){cur=g;cd=dd}}
+  /* HYSTERESIS (ops finding on 4c7a5369c2: 13 of 95 units swung 8-178 degrees 3+ times because "the nearest" changed): the target is kept while it is still visible, for at least 3 s of scene time, and the unit
+     switches only when the new enemy is at least 30% nearer than the current one (distance <= 0.7x). A target that vanished is replaced at once. */
+  var now=A.T,sh=!!(m._ship),HOLD=sh?8:3,NEAR=sh?.5:.7;if(cur&&now>=(st.enT||0)&&now-(st.enT||0)<HOLD){best=cur;bd=cd}else if(cur&&!(bd<=cd*NEAR)){best=cur;bd=cd}else if(best&&bk!==st.en){st.en=bk;st.enT=now}
+  if(best&&bd<1.5)return(Math.atan2((best.p[1]-p[1])*.84,best.p[0]-p[0])*180/Math.PI+360)%360;
+  var a=m._area||'',ar=m._side==='ar';if(a==='golan')return ar?270:90;if(a==='sinai')return ar?90:270;return null}
+function setTank(m,p,hd,o,moving,ph){m.setLatLng(p);op(m,o);var e=m.getElement();if(!e)return;if(m._heli&&m._hs!==!moving){m._hs=!moving;e.classList.toggle('hs',!moving)}var r=e.querySelector('.rot'),tu=e.querySelector('.tur');if(!r)return;
+  var st=A.hd[m._leaflet_id]||(A.hd[m._leaflet_id]={a:null,pt:null}),q=map.project(L.latLng(p),10),mv=null;
+  var d=0;if(st.pt){var dx=q.x-st.pt.x,dy=q.y-st.pt.y;d=Math.hypot(dx,dy);if(moving&&d>0.6&&d<60)mv=Math.atan2(dx,-dy)*180/Math.PI}
+  var gp=A.gp||(A.gp={}),pa=Array.isArray(p)?p:[p.lat,p.lng];gp[m._leaflet_id]={p:pa,side:m._side,vis:o>.3,mv:!!moving,rp:A.rp|0};
+  var dT=st.tT===undefined?0:A.T-st.tT;st.tT=A.T;   /* scene seconds since this unit was last drawn: a seek (jump >1.5 s or backwards) snaps the heading, normal playback turns at most 90 deg per scene second */
+  if(moving&&!m._rev){if(st.a===null)st.a=hd*180/Math.PI;else if(mv!==null)st.a=lerpDeg(st.a,mv,.3)}   /* R50 (the owner 10-26): a RETREATING unit (label starts with נסיגה / says נסוגים) keeps its gun toward the enemy: it takes the standing-unit facing while it moves backwards */
+  else{var fb=NOFACE?null:faceBearing(m,pa,st);if(fb!==null){if(st.a===null||dT<0||dT>1.5)st.a=fb;else{var dd=((fb-st.a+540)%360)-180,mx=90*dT,stp=dd*Math.min(1,6*dT);st.a+=Math.max(-mx,Math.min(mx,stp))}}else if(st.a===null)st.a=hd*180/Math.PI}
+  if(!st.pt||mv!==null||!moving||d>=60)st.pt=q;   /* the reference point only advances once a real move (>=0.6 px) has accumulated, so a slow unit still turns along a curve; at rest it follows the unit */
+  r.style.transform='rotate('+st.a+'deg)';
+  if(tu)tu.style.transform='rotate('+(moving?17*Math.sin(A.T*1.7+(ph||0)):0).toFixed(1)+'deg)'}
+/* the owner 10-19: ground units stay on the map at their FINAL position after their mission ends (until the end of the day); aircraft keep their own rule. Units ending within 16 px of each other are spread on a small circle (computed per zoom, eased in over 1.2 s). */
+function finList(){if(A.fin)return A.fin;var f=[],seenG={};(A.scene.items||[]).forEach(function(it,i){if(it.type==='walk'&&it.legs&&it.legs.length&&(it.trail==='tank'||unitKind(it.label,it.trail))){var lg=it.legs[it.legs.length-1],pa=lg.path;f.push({k:'s'+i,ll:pa[pa.length-1]})}else if(it.type==='arrow'&&it.path&&it.path.length&&(it.trail==='tank'||unitKind(it.label,it.trail,it.kind))){f.push({k:'s'+i+'t',ll:it.path[it.path.length-1]})}else if(it.type==='shell'){var gk='gun:'+it.from.join(',');if(!seenG[gk]){seenG[gk]=1;f.push({k:gk,ll:it.from})}}});A.fin=f;return f}
+function finOff(k){var z=map.getZoom();if(z<9)return null;/* the owner 10-26 (foot soldiers on the sea): the arrival spread pushes overlapping markers apart by 18 px; at a low zoom 18 px is 10+ km and put soldiers into the sea, so below zoom 9 markers simply overlap, and above it no marker moves more than 30 px */if(A.finZ!==z){A.finZ=z;A.finO={};var f=finList().map(function(q,i){var p=map.project(q.ll,z);return {k:q.k,x:p.x,y:p.y,ox:p.x,oy:p.y,i:i}}),D=18;for(var it=0;it<80;it++){var moved=false;for(var i=0;i<f.length;i++)for(var j=i+1;j<f.length;j++){var dx=f[j].x-f[i].x,dy=f[j].y-f[i].y,d=Math.hypot(dx,dy);if(d<D){moved=true;if(d<.5){var an=(i*7+j*3)%12/12*2*Math.PI;dx=Math.cos(an);dy=Math.sin(an);d=1}var u=(D-d)/2/d;f[i].x-=dx*u;f[i].y-=dy*u;f[j].x+=dx*u;f[j].y+=dy*u}}if(!moved)break}f.forEach(function(q){var ox=q.x-q.ox,oy=q.y-q.oy;var m=Math.hypot(ox,oy);if(m>30){ox*=30/m;oy*=30/m}if(m>.5)A.finO[q.k]=[ox,oy]})}return A.finO[k]||null}
+function finLL(k,ll,w){var o=ICONS&&finOff(k);if(!o||w<=0)return ll;var z=map.getZoom(),p=map.project(ll,z);return map.unproject(L.point(p.x+o[0]*w,p.y+o[1]*w),z)}
+/* the owner 10-19: a finished ground unit keeps its ICON but not its white label (label while active, 8 s after it ends, or while hovered; a tap opens the popup that names it) */
+function ttUnit(m,show){var tt=m.getTooltip&&m.getTooltip();if(!tt)return;if(!m._hovI){m._hovI=1;m.on('mouseover',function(){m._hov=1;tt.setOpacity(1)});m.on('mouseout',function(){m._hov=0;if(m._ttOn===false)tt.setOpacity(0)})}m._ttOn=show;if(tt.setOpacity)tt.setOpacity(show||m._hov?1:0)}
+/* label collision avoidance (ICONS pages): by priority active unit labels > control-circle labels > other labels > place names; a label that overlaps a kept one is hidden (visibility), re-run after render/zoom, throttled */
+function declutter(force){if(!ICONS)return;var n=Date.now();if(!force&&A.dcT&&n-A.dcT<300)return;A.dcT=n;var els=[].slice.call(document.querySelectorAll('.leaflet-tooltip.tt')),it=[];els.forEach(function(e,i){if(parseFloat(e.style.opacity||'1')<.2){return}var c=e.className,pr=/\bunt\b/.test(c)?5:/\bctl\b/.test(c)?4:/\bplc\b/.test(c)?2:3;e.style.visibility='';var r=e.getBoundingClientRect();if(r.width>0)it.push({e:e,r:r,p:pr,i:i})});it.sort(function(a,b){return b.p-a.p||a.i-b.i});var kept=[];it.forEach(function(a){var hit=kept.some(function(b){return a.r.left<b.right+2&&a.r.right>b.left-2&&a.r.top<b.bottom+1&&a.r.bottom>b.top-1});if(hit)a.e.style.visibility='hidden';else kept.push(a.r)})}
+function walk(key,cls,sym,label,legs,T,trl,area,hold,lead){var LD=lead==null?LEAD:lead;if(trl&&!(ICONS&&NAVK[unitKind(label,trl)]))/* the owner 10-26: no footstep dots behind ships on the sea */trail(key+'tr',legPts(legs,T),trl,(ICONS&&(trl==='tank'||unitKind(label,trl))&&T>legs[legs.length-1].t1+4)?.3:.85);var tk=trl==='tank';var kd=ICONS&&!tk?unitKind(label,trl):null;var pers=ICONS&&(tk||!!kd),rk=tk||!!(kd&&(NAVK[kd]||kd==='heli'));var m=tk?tankM(key,cls==='syr'?'#b3261e':'#1d5ea8',label,'bottom',hold):kd?kindM(key,kd,cls==='syr'?'#b3261e':'#1d5ea8',label,'bottom'):spr(key,function(){var k=L.marker([0,0],{icon:L.divIcon({className:'',html:'<div class="ic '+cls+'" style="width:26px;height:26px;font-size:13px">'+sym+'</div>',iconSize:[26,26],iconAnchor:[13,13]}),interactive:true,opacity:0});if(label){k.bindTooltip(label,{permanent:true,direction:'bottom',className:'tt unt',interactive:true});popFor(k,popHtml(label.replace(/\s*\(סכמטי\)\s*$/,''),'כוח בתנועה (סכמטי): '+sideOf(cls)+'. המיקום והמסלול מצוירים, לא נתון מדויק.',clockAt(legs[0].t0)))}return k}),t0=legs[0].t0,t1=legs[legs.length-1].t1;if(rk){m._side=cls==='syr'?'ar':'il';m._area=area||'';m._ship=!tk;m._heli=kd==='heli'}
+  if(rk&&m._rev===undefined)m._rev=/^נסיגה|נסוג/.test(label||'')?1:0;
+  if(T<t0&&pers&&T>=t0-LD){var p0=legs[0].path[0],o0=clamp((T-(t0-LD))/1.5,0,1)*.9;if(rk){setTank(m,p0,pathPos(legs[0].path,0).h,o0,false,key.length)}else{m.setLatLng(p0);op(m,o0);sc(m,1)}return}
+  if(pers&&T>t1){var lgE=legs[legs.length-1],pe=pathPos(lgE.path,1),pf=finLL(key,pe.p,clamp((T-t1)/1.2,0,1));if(rk){setTank(m,pf,pe.h,1,false,key.length)}else{m.setLatLng(pf);op(m,1);sc(m,1)}ttUnit(m,T<=t1+8);return}if(T<t0||T>t1){op(m,0);return}var p=null,pp=null,mov=false;for(var k=0;k<legs.length;k++){var L3=legs[k];if(T>=L3.t0&&T<=L3.t1){pp=pathPos(L3.path,ease((T-L3.t0)/(L3.t1-L3.t0)));p=pp.p;mov=true;break}if(T>L3.t1&&(k+1>=legs.length||T<legs[k+1].t0)){pp=pathPos(L3.path,1);p=pp.p;break}}
+  if(!p){op(m,0);return}var o=clamp((T-t0)/1,0,1)*(pers?1:clamp((t1-T)/1.5,0,1));if(rk){setTank(m,p,pp.h,o,mov,key.length);if(ICONS)ttUnit(m,true);return}m.setLatLng(p);op(m,o);sc(m,1);if(ICONS)ttUnit(m,true)}
+/* touch: a tap lands on the NEAREST place ring within 22 px (neighbouring labels/rings must not steal it) */
+function nearestPl(ll){var E=A.E,best=null,bd=1e9,pt=map.latLngToContainerPoint(ll);(E.pl||[]).forEach(function(h){var d=pt.distanceTo(map.latLngToContainerPoint(h.getLatLng()));if(d<bd){bd=d;best=h}});if(best&&bd<=(TOUCH?24:18)&&!(best.isPopupOpen&&best.isPopupOpen()))best.openPopup()}
+/* touch: a tap within 16 px of a ring centre belongs to that ring, even when a unit or an event bubble sits on top of it (capture phase) */
+function ringCapture(){if(!TOUCH||A.ringCap)return;A.ringCap=1;var C=map.getContainer();
+  /* Touch devices: decide on touchend from the REAL touch point (Chrome retargets/snaps the synthesised click to a neighbour node, and taps on some SVG nodes make no click at all). The nearest ring within 24 px opens (<=14 px always wins over a unit); the synthesised click is then cancelled so no neighbour layer reopens another popup. */
+  function pick(x,y){var E=A.E;if(!E||!E.pl||!E.pl.length)return null;var r=C.getBoundingClientRect(),pt=L.point(x-r.left,y-r.top),best=null,bd=1e9;E.pl.forEach(function(h){var d=pt.distanceTo(map.latLngToContainerPoint(h.getLatLng()));if(d<bd){bd=d;best=h}});return best?{h:best,d:bd}:null}
+  function skip(t){return t&&t.closest&&t.closest('.leaflet-popup,.leaflet-control,.btn,button,a')}
+  C.addEventListener('touchstart',function(e){var t=e.changedTouches&&e.changedTouches[0];A.tp=t?{x:t.clientX,y:t.clientY,w:Date.now(),n:e.touches.length}:null},{capture:true,passive:true});
+  C.addEventListener('touchend',function(ev){var tp=A.tp,t=ev.changedTouches&&ev.changedTouches[0];if(!tp||!t||tp.n>1||Date.now()-tp.w>600||Math.hypot(t.clientX-tp.x,t.clientY-tp.y)>12||skip(ev.target))return;var q=pick(tp.x,tp.y);if(!q)return;var onMk=ev.target.closest&&ev.target.closest('.leaflet-marker-icon');if(q.d<=14||(q.d<=24&&!onMk)){ev.stopPropagation();ev.stopImmediatePropagation();if(ev.cancelable)ev.preventDefault();A.tapDone=Date.now();if(!(q.h.isPopupOpen&&q.h.isPopupOpen()))q.h.openPopup()}},{capture:true,passive:false});
+  C.addEventListener('click',function(ev){if(A.tapDone&&Date.now()-A.tapDone<800){ev.stopPropagation();ev.stopImmediatePropagation();ev.preventDefault();return}if(skip(ev.target))return;var tp=A.tp&&Date.now()-A.tp.w<1200?A.tp:null,q=pick(tp?tp.x:ev.clientX,tp?tp.y:ev.clientY);if(!q)return;var onMk=ev.target.closest&&ev.target.closest('.leaflet-marker-icon');if(q.d<=14||(q.d<=24&&!onMk)){ev.stopPropagation();ev.stopImmediatePropagation();ev.preventDefault();if(!(q.h.isPopupOpen&&q.h.isPopupOpen()))q.h.openPopup()}},true)}
+function legIcons(){var lg=$('pLeg');if(!lg||A.legIcons)return;A.legIcons=1;lg.classList.add('k');var d=lg.querySelector('.lg');if(d)d.innerHTML='<span class="sw dot" style="background:transparent;border:2px solid #1b8fae"></span> טבעת תכלת-כחולה = מקום בצד הישראלי (לפי השליטה בתחילת היום) &nbsp; <span class="sw dot" style="background:transparent;border:2px solid #5a1230"></span> טבעת בורדו = מקום בצד השני &nbsp; <span class="sw dot" style="background:transparent;border:2px solid #7a7a7a"></span> טבעת אפורה = מקום מחולק או בינלאומי (למשל ירושלים כולה, בית הממשלה של האו"ם). כל טבעת עם שם, פנימה ריקה; הטבעת היא נקודת היישוב או העיר בוויקיפדיה, לא מיקום האירוע. לחיצה פותחת הסבר. הצבע הוא לפי מי שלט במקום בתחילת היום המוצג: מקום שכוחות צה"ל נכנסו אליו ביום קודם (לפי עיגולי השליטה) מופיע מאותו בוקר בצבע הישראלי, ובתוך היום הצבע אינו משתנה.';
+  var h='<span class="lg"><b>סוגי כוחות</b> (כל סוג בסמל משלו; כחול = ישראל, אדום = הצד השני; הסמלים והמסלולים סכמטיים):</span>';
+  [['tank',TANK],['inf',KSVG.inf],['apc',KSVG.apc],['art',KSVG.art],['nav',KSVG.nav],['heli',KSVG.heli]].forEach(function(k){h+='<span class="lg"><span style="display:inline-block;vertical-align:middle;margin-inline-end:6px">'+k[1].replace(/CLR/g,'#1d5ea8')+'</span> '+(k[0]==='tank'?'שריון (טנק עם צריח)':KNAME[k[0]])+'</span>'});
+  h+='<span class="lg"><span style="display:inline-block;vertical-align:middle;margin-inline-end:6px">'+BASEG+'</span> בסיס אוויר (עיגול מקווקו; מיקום סכמטי)</span>';lg.insertAdjacentHTML('beforeend',h)}
+function scaleInit(){var C=D.scale;if(!C||A.scaleEl)return;var el=document.createElement('div');el.className='scalebox';el.hidden=true;var K=C.k||1.45,h='<h4>'+esc(C.title)+'</h4><div class="sc-row">';
+  C.fronts.forEach(function(f){var ra=Math.round(K*Math.sqrt(f.a.n)),rb=Math.round(K*Math.sqrt(f.b.n));
+    h+='<div class="sc-f"><div class="sc-b"><div class="sc-c sc-a" style="width:'+2*ra+'px;height:'+2*ra+'px">'+esc(f.a.n.toLocaleString('en'))+'</div><div class="sc-c sc-i" style="width:'+2*rb+'px;height:'+2*rb+'px">'+esc(f.b.n.toLocaleString('en'))+'</div></div><b>'+esc(f.name)+'</b><small>'+esc(f.a.l)+' מול '+esc(f.b.l)+'</small><small>יחס '+(f.a.n/f.b.n).toFixed(1)+' : 1 (חישוב שלנו)</small></div>'});
+  h+='</div><small>'+esc(C.note)+'</small><small>מקור: '+esc(C.src)+'</small>';el.innerHTML=h;map.getContainer().appendChild(el);A.scaleEl=el}
+function scaleTick(T){var C=D.scale,el=A.scaleEl;if(!C||!el)return;var on=T>=C.t0&&T<=C.t1;if(on){el.hidden=false;el.classList.remove('off')}else if(!el.hidden){if(T>C.t1&&T<C.t1+2){el.classList.add('off');setTimeout(function(){if(A.T>C.t1)el.hidden=true},900)}else el.hidden=true}}
+function initScene(){var S=D.scene,E=A.E;scaleInit();/* the owner 10-23 (Yom Kippur day 1 'nothing happens'): a whole-war page may set whole.skip_idle - the clock then runs 8x through any stretch with no new item, card or log line within 3 s ahead (day 1 has no drawn move until 13:55), and the first play starts 1.5 s before the first one */A.starts=null;if(D.whole&&D.whole.skip_idle){var st=[];(S.items||[]).forEach(function(i){var x=i.t0!=null?i.t0:i.t;if(x!=null)st.push(x)});(S.acts||[]).forEach(function(i){st.push(i.s)});(S.log||[]).forEach(function(i){st.push(i.t)});st.sort(function(x,y){return x-y});A.starts=st}/* the owner 10-22: a casualty record of an AIR attack shows (badge and panel row) only when the attack lands: scene.cas_t = {card id: hit time}; never earlier than the record's own time */if(S.cas_t)casEv().forEach(function(c){if(S.cas_t[c.id]!=null&&S.cas_t[c.id]>c.t)c.t=S.cas_t[c.id]});ICONS=!!S.icons;if(ICONS)legIcons();E.g=L.layerGroup();E.s={};A.scene=S;A.acts=S.acts;A.DUR=S.dur;A.sfx=S.sfx.slice().sort(function(a,b){return a[0]-b[0]});A.nextSfx=0;A.view0=S.view0;A.kills=[];$('aT').max=Math.round(S.dur*10);
+  Object.keys(D.places).forEach(function(k){var q=D.places[k];if(S.show_places&&S.show_places.indexOf(k)<0)return;var hh=(ICONS?(L.circleMarker([q.lat,q.lon],{radius:6,color:SIDEC[q.side]||SIDEC.ar,weight:2,fill:false,interactive:false}).addTo(E.g),L.circleMarker([q.lat,q.lon],{radius:TOUCH?22:16,stroke:false,fillColor:'#000',fillOpacity:0})):L.circleMarker([q.lat,q.lon],{radius:6,color:'#222',weight:2,fillColor:'#fff',fillOpacity:1})).bindTooltip(q.name+(ICONS?'':' ◉'),{permanent:true,direction:'right',className:'tt plc',interactive:!(ICONS&&TOUCH),offset:ICONS?[-9,0]:[0,0]}).bindPopup(popHtml(q.name,(q.precision==='exact'?'מקום מדויק: ':'מקום משוער: ')+(q.basis||'נקודת המקום בוויקיפדיה'),q.precision==='exact'?'הנקודה היא המקום עצמו, לא מיקום האירוע':'מיקום משוער: חישבנו או שרטטנו אותו מהכתוב בערך')).addTo(E.g);if(ICONS){ringCapture();(E.pl=E.pl||[]).push(hh);hh.on('click',function(e){nearestPl(e.latlng)})}});
+  (S.bases||[]).forEach(function(b){L.marker(b.pos,{icon:fixedIcon('base',ICONS?BASEG:'בסיס',34),interactive:true}).bindTooltip(b.label+' (מיקום סכמטי)',{className:'tt'}).bindPopup(popHtml(b.label,'בסיס (מיקום סכמטי): הערכים לא מציינים איפה הבסיס, והעיגול מצויר כדי להראות מאיפה יצאו הכוחות.','סכמטי')).addTo(E.g)});
+  if(S.control){var C=S.control;E.ctl=[];C.grow.forEach(function(g){var c=L.circle(g.center,{radius:g.radius_m*.3,color:'#1d5ea8',weight:2,dashArray:'4 4',fillColor:'#1d5ea8',fillOpacity:0,opacity:0,interactive:false}).bindTooltip(ICONS?g.label.replace('קו חזית משוער: ','שליטה ישראלית (משוער): '):g.label,{permanent:true,direction:'top',className:'tt ctl'}).addTo(E.g);g._c=c;g._tt=c.getTooltip();E.ctl.push(g)});
+    var lg=$('pLeg');if(lg){var sp=document.createElement('span');sp.className='lg';sp.innerHTML=D.whole?'<b>קו כחול דק</b> = שטח שנכבש, ורק הוא: מקום שהערך מזכיר שכוחות צה"ל נכנסו אליו, בלי השטח שהחזיקו בתחילת המלחמה. הקו סכמטי (מאוחד מעיגולים), לא גבול מדויק.':'<b>עיגול כחול מקווקו</b> = מקום שהערך מזכיר שכוחות צה"ל נכנסו אליו, ורק הוא. אין קו חזית או גבול מצויר: העיגול סכמטי, לא קו שליטה מדויק.';lg.appendChild(sp)}}
+  if(!S.tally)$('tally').hidden=true;
+  map.on('zoomend',function(){if(!A.playing&&A.on)renderA()});
+  wireAnim()}
+/* the owner 10-22 (whole-war page): the control circles are drawn as ONE thin outline of their union, only the newly taken ground: each circle contributes the arcs that lie outside every other visible circle, so overlapping circles show no inner arcs. Pure function of T (cached per T). */
+function ctlOutline(T){var E=A.E;if(!E.ctlG){E.ctlG=L.layerGroup().addTo(map);E.ctlK=0}var key=T.toFixed(2)+'|'+SEL+'|'+map.getZoom().toFixed(1);if(E.ctlK===key)return;E.ctlK=key;E.ctlG.clearLayers();
+ var cs=[],K=111320;E.ctl.forEach(function(g){var f=clamp((T-g.t0)/(g.t1-g.t0),0,1);if(f<=0)return;cs.push({c:g.center,r:g.radius_m*(.3+.7*f),k:(SEL==='all'||g.area===SEL)?1:.25,cl:Math.cos(g.center[0]*Math.PI/180)})});
+ var N=96,runs={1:[],.25:[]};cs.forEach(function(a,i){var cur=[];function flush(){if(cur.length>1)runs[a.k].push(cur);cur=[]}
+  for(var n=0;n<=N;n++){var th=n/N*2*Math.PI,la=a.c[0]+Math.sin(th)*a.r/K,lo=a.c[1]+Math.cos(th)*a.r/K/a.cl,inside=false;
+   for(var j=0;j<cs.length&&!inside;j++){if(j===i)continue;var b=cs[j],dy=(la-b.c[0])*K,dx=(lo-b.c[1])*K*b.cl;if(dx*dx+dy*dy<b.r*b.r*.9999)inside=true}
+   if(inside)flush();else cur.push([la,lo])}flush()});
+ [1,.25].forEach(function(k){if(runs[k].length)L.polyline(runs[k],{color:'#1d5ea8',weight:1.3,opacity:.9*k,interactive:false,lineCap:'round'}).addTo(E.ctlG)})}
+/* the owner 10-26 event audit: a card whose source gives NO place on the map is not drawn at an invented place; it is shown as a caption on the map (type 'note': t0,t1,text), so it is never invisible. */
+function updNotes(T,S){var el=$('evn');if(!el)return;var h='';S.items.forEach(function(it){if(it.type==='note'&&T>=it.t0&&T<=it.t1&&(SEL==='all'||!it.area||it.area==='all'||it.area===SEL))h+='<div><b>אין מיקום על המפה:</b> '+esc(it.text)+'</div>'});if(el._h!==h){el._h=h;el.innerHTML=h;el.hidden=!h}}
+function renderScene(){A.rp=(A.rp|0)+1;var T=A.T,S=A.scene;if(window.__dn&&window.__dn.pre)window.__dn.pre(T,S.items);$('aT').value=Math.round(T*10);var act=A.acts[actAt(T)];updLog(T);$('clk').textContent=act.clock;$('tally').textContent=S.tally?(S.tally.label+': '+S.tally.times.filter(function(x){return x<=T}).length+' מתוך '+S.tally.times.length):'';
+  var drawIt=function(it,i){if((it.type==='boom')!==!!A.pass2)return;var T=((it.u!=null&&A.T>it.u)||(it.sunk!=null&&A.T>=it.sunk))?-1e6:A.T;/* whole-war page: a unit (it.u = end of its day) is drawn from its start to the end of ITS day, never carried into the next day */CURAF=(SEL==='all'||!it.area||it.area==='all'||it.area===SEL)?1:.18;var k='s'+i;
+    if(it.type==='fly')fly(k,it.side==='iaf'?'#1d5ea8':(it.side==='ar'||it.side==='syr')?'#b3261e':'#555',it.label||null,it.legs,T,it.off,it.down);
+    else if(it.type==='walk')walk(k,it.cls||'gnd',it.sym||'▣',it.label||null,it.legs,T,it.trail,it.area,it.hold,it.lead);
+    else if(it.type==='boom'){if(window.__dn&&window.__dn.orphan(it.at)){boom(k,it.at,it.t,it.dur||1.3,-1e6,it.big||1);xmark(k+'o',it.at,T<=it.t+6?T:-1,it.t,'הפגיעה מדווחת, הכוח התוקף לא מצוין')}else{if(window.__dn&&A.E.s[k+'o'])xmark(k+'o',it.at,-1,it.t);boom(k,it.at,it.t,it.dur||1.3,T,it.big||1)}}
+    else if(it.type==='sam')samC(k,it,T);
+    else if(it.type==='wreck')wreckM(k,it,T);
+    else if(it.type==='loss')lossM(k,it,T);
+    else if(it.type==='surrender')surrenderM(k,it,T);
+    else if(it.type==='x')xmark(k,it.at,T,it.t,it.label||null);
+    else if(it.type==='shell'){if(T<it.t0-1.2&&!A.E.s[k+'a'])return;if(ICONS&&!it.ship)gunM(k+'g',it,T);var on=T>=it.t0&&T<=it.t1;shellArc(k,it.from,it.to,(it.lift||.05)*1.9,on?(((T-it.t0)/it.period)%1):0,on)}
+    else if(it.type==='arrow'){var path=it.path,hold=it.hold==null?22:it.hold;if(ICONS&&LAUNCH.test(it.label||''))launchM(k+'L',it,T,hold);if(it.trail)trail(k+'tr',T<it.t0?null:ptsUpTo(path,ease((T-it.t0)/(it.t1-it.t0))),it.trail,(ICONS&&(it.trail==='tank'||ukA(it))&&T>it.t1+4)?.3:.85);var persA=ICONS&&(it.trail==='tank'||!!ukA(it)),vis=persA?T>=it.t0-LEAD:(T>=it.t0&&T<=it.t1+(/טיל|טילי|רקטות|סאגר|גבריאל|סטיקס|פגז/.test(it.label||'')?Math.min(hold,3):Math.min(hold,22)));/* the owner 10-26 (white cubes at Benha): a missile dot is shown while it flies (+3 s), any other unnamed force tip at most 22 s - never the item's long unit hold */var tkA=it.trail==='tank'&&!(it.area==='sea'||it.water_ok),m2=tkA?tankM(k+'t',it.color==='#b3261e'?'#b3261e':'#1d5ea8',null):((ICONS&&ukA(it))?kindM(k+'t',ukA(it),it.color==='#b3261e'?'#b3261e':'#1d5ea8',null):dot(k+'t','shot',12));if(vis){var p=pathPos(path,ease((T-it.t0)/(it.t1-it.t0)));var tip=p.p,pts=[path[0]];var tot=0;
+        /* polyline up to the tip */var segs=[];for(var j=0;j+1<path.length;j++)segs.push(Math.hypot(path[j+1][0]-path[j][0],(path[j+1][1]-path[j][1])*.84));var tl=segs.reduce(function(a,b){return a+b},0),d=ease((T-it.t0)/(it.t1-it.t0))*tl,acc=0;pts=[path[0]];for(j=0;j<segs.length;j++){if(acc+segs[j]<=d){pts.push(path[j+1]);acc+=segs[j]}else{var g=(d-acc)/segs[j];pts.push([lerp(path[j][0],path[j+1][0],g),lerp(path[j][1],path[j+1][1],g)]);break}}
+        var pre0=T<it.t0,fade=pre0?clamp((T-(it.t0-LEAD))/1.5,0,1)*.9:(T>it.t1+hold-4?clamp((it.t1+hold-T)/4,0,1):1);var icf=persA&&!pre0?1:fade,lnf=persA&&!pre0&&T>it.t1+hold-4?Math.max(.35,fade):fade,tipF=persA&&T>it.t1?finLL(k+'t',tip,clamp((T-it.t1)/1.2,0,1)):tip;if(pre0)lineSeg(k,'#1d5ea8',[[0,0],[0,0]],0);else lineSeg(k,it.color||'#1d5ea8',pts,.85*lnf*CURAF,it.water_ok);if(tkA&&m2._rev===undefined)m2._rev=/^נסיגה|נסוג/.test(it.label||'')?1:0;if(tkA)setTank(m2,tipF,p.h,icf*CURAF,T<=it.t1,k.length);else{m2.setLatLng(tipF);op(m2,icf)}if(persA&&m2._tt)ttUnit(m2,T<=it.t1+8);if(it.label){var lm=m2;if(!lm._tt){lm.bindTooltip(it.label,{permanent:true,direction:'top',className:'tt unt',interactive:true});lm._tt=1;if(lm.options)lm.options.interactive=true;if(lm._initInteraction)lm._initInteraction();popFor(lm,popHtml(it.label.replace(/\s*\(סכמטי\)\s*$/,''),(it.color==='#b3261e'?'חץ (סכמטי): ':'חץ התקדמות (סכמטי): ')+'כוון הכוח מצויר, לא מסלול מדויק. הריבוע החלול הוא ראש החץ (הכוח בתנועה).',clockAt(it.t0)))}}}else{lineSeg(k,'#1d5ea8',[[0,0],[0,0]],0);op(m2,0)}}
+    else if(it.type==='mark'){var m3=dot(k,'bld'+(it.st?' '+it.st:''),18);var on=T>=it.t0&&(it.t1==null||T<=it.t1);m3.setLatLng(it.at);op(m3,on?1:0);if(it.label&&!m3._tt){m3.bindTooltip(it.label,{permanent:true,direction:'right',className:'tt',interactive:true});m3._tt=1;if(m3.options)m3.options.interactive=true;if(m3._initInteraction)m3._initInteraction();popFor(m3,popHtml(it.label,it.q?('«'+it.q+'» — '+(it.s||'')):'סימון על המפה לאירוע שבציר הזמן. הנקודה מצוירת לפי המקום שהערך מציין; כשהערך לא נותן מקום מדויק הנקודה משוערת (סכמטית), ובכל מקרה אינה מיקום מדויק של האירוע.',clockAt(it.t0)))}}
+  };updDest(T,S);A.pass2=0;S.items.forEach(drawIt);A.pass2=1;S.items.forEach(drawIt);A.pass2=0;updNotes(T,S);if(window.__dn)window.__dn.onTime(T,S.items,A.playing);   /* units first, then impacts (a glow depends on the units DRAWN this frame); the day/night script runs after the drawing */
+  CURAF=1;declutter();
+  if(A.E.ctl&&D.whole)ctlOutline(T);if(A.E.ctl)A.E.ctl.forEach(function(g){var f=clamp((T-g.t0)/(g.t1-g.t0),0,1),k=(SEL==='all'||g.area===SEL)?1:.25;g._c.setRadius(g.radius_m*(.3+.7*f));if(D.whole)g._c.setStyle({fillOpacity:0,opacity:0});else g._c.setStyle({fillOpacity:.32*f*k,opacity:.85*f*k});if(g._tt&&g._tt.setOpacity)g._tt.setOpacity(f>.6&&k>.5&&(g.lab_to===undefined||T<=g.lab_to)?1:0)})}
+function renderA(){scaleTick(A.T);altCam();if(A.scene)return renderScene();var T=A.T,E=A.E,g=A.G,G=g.G;$('aT').value=Math.round(T*10);
+  var ai=actAt(T),act=A.acts[ai];updLog(T);
+  var kills=A.kills.filter(function(t){return T>=t}).length;$('clk').textContent=act.clock;$('tally').textContent='מיג 21 שהופלו: '+kills+' מתוך 6';
+  /* act 1: the tractor at HaOn, fire flashes (schematic) */
+  var trac=spr('tractor',function(){return L.marker(G.haon,{icon:L.divIcon({className:'',html:'<span class="ic civ">🚜</span>',iconSize:[28,28],iconAnchor:[14,14]}),interactive:false,opacity:0}).bindTooltip('טרקטור (במקום המשוער של האון)',{className:'tt'})});op(trac,T<14?1:T<16?(16-T)/2:0);
+  for(var i=0;i<3;i++)boom('f1'+i,[G.haon[0]+(i-1)*0.004,G.haon[1]+0.004*(i%2?1:-1)],0.8+i*1.6,1.1,T,.6);
+  /* act 2: exchange of fire - no place: nothing on the map (the caption says so) */
+  /* act 3: shelling of Gadot and Ein Gev from the schematic Golan side */
+  [[G.gad,0],[G.eg,1],[G.gad,2],[G.eg,3],[G.gad,4]].forEach(function(q,i){var t0=14.5+i*1.5,f=(T-t0)/1.6,from=[g.cen[0]+0.04*(i%3),g.cen[1]+0.1],m=0;
+    shellArc('sh3'+i,from,q[0],.09,clamp(f,0,1),f>0&&f<1);boom('i3'+i,q[0],t0+1.5,1.2,T,1)});
+  /* act 4: bomber strike on posts and batteries (schematic count) */
+  var tOut4=[[g.cen[0]+0.06,g.cen[1]+0.02],[32.95,35.25],g.IL];
+  fly('iaf4','#1d5ea8','ווטור',[{t0:22.5,t1:31,path:tIAFof(g)},{t0:31.5,t1:39.5,path:tOut4}],T);
+  fly('iaf4b','#1d5ea8','מיסטר / אוראגן / סופר מיסטר',[{t0:28.5,t1:35,path:tIAFof(g)},{t0:35.5,t1:43.5,path:tOut4}],T);
+  g.TG.forEach(function(t,i){var h=29+i*.9,b=dot('b4'+i,'bomb',10),f=(T-(h-1))/1;if(f>0&&f<1){b.setLatLng(t);op(b,1);var e=b.getElement();if(e)e.firstChild.style.transform='translateY('+Math.round(-70*(1-f*f))+'px)'}else op(b,0);boom('x4'+i,t,h,1.3,T,1);var m=dot('tg'+i,'bld',18);m.setLatLng(t);op(m,T>=22&&T<=60?1:0);var ie=m.getElement();if(ie)ie.firstChild.style.background=T>=h?'#c0392b':'#222'});
+  /* act 5: ~14:00 Syrian scramble, bombers leave, the First-squadron Mirage pair scramble */
+  fly('syr5','#b3261e','מטוסי ירוט סוריים',[{t0:34.5,t1:40.5,path:[g.SY,[33.5,36.4],[G.kun[0]+0.15,G.kun[1]+0.35],[G.kun[0]+0.02,G.kun[1]+0.05]]}],T);
+  var P1=[g.IL,[32.9,35.3],[33.05,35.65],[G.kun[0]-0.04,G.kun[1]-0.1]],P1e=P1[3],chase=[P1e].concat(tChaseOf(g).slice(1)),back=[chase[chase.length-1],[33.1,35.7],g.IL];
+  var legsM=[{t0:36.5,t1:43,path:P1},{t0:43,t1:46,orbit:P1e},{t0:46,t1:55,path:chase},{t0:55.5,t1:60.5,path:back}];
+  fly('mir5a','#1d5ea8','מיראז\'ים (זוג)',legsM,T);fly('mir5b','#1d5ea8',null,legsM,T,[-0.025,-0.02]);
+  /* act 6: the MiG pair over Kuneitra, the first kill */
+  var mg1=plane('mig6a','#b3261e'),mg2=plane('mig6b','#b3261e');if(T>=40&&T<=56){var fk=clamp((T-40)/4,0,1);var base=[G.kun[0]+0.01,G.kun[1]+0.02];
+    if(T<46)setPlane(mg1,[base[0]+(T-40)*0.002,base[1]-(T-40)*0.004],2.5,T<41?T-40:1);
+    if(T<44)setPlane(mg2,[base[0]-0.02+(T-40)*0.002,base[1]+0.02-(T-40)*0.004],2.5,1);else if(T<46){var ff=(T-44)/2;setPlane(mg2,[base[0]-0.02-ff*0.05,base[1]+0.0+ff*0.01],2.5+ff*5,1-ff*.5)}else op(mg2,0);
+    var mp1=pathPos(tChaseOf(g),ease((T-46)/8));if(T>=46)setPlane(mg1,mp1.p,mp1.h,T<54?1:clamp((55-T),0,1))}else{op(mg1,0);op(mg2,0)}
+  smoke('sm6',function(t){return [G.kun[0]-0.02-t*0.02,G.kun[1]+0.04]},44,T,4);boom('b6',G.kun,43.6,1.2,T,1);xmark('x6',G.kun,T,45,'הפלה ראשונה מעל קוניטרה');
+  /* act 7: the chase over Damascus */
+  var mm=dot('mat7','shot',10);var fm=(T-49.2)/0.9;if(fm>0&&fm<1){mm.setLatLng([lerp(G.dam[0]-0.1,G.dam[0]-0.07,fm),lerp(G.dam[1]-0.15,G.dam[1]-0.1,fm)]);op(mm,1)}else op(mm,0);boom('p7',[G.dam[0]-0.07,G.dam[1]-0.1],50.1,.8,T,.7);boom('b7',[G.dam[0]-0.03,G.dam[1]-0.06],53,1.3,T,1);xmark('x7',[G.dam[0]-0.03,G.dam[1]-0.06],T,53.6,'הפלה משותפת מעל דמשק');
+  smoke('sm7',function(t){var a=pathPos(tChaseOf(g),ease(clamp((T-46)/8,0,1)));return [a.p[0]-t*0.004,a.p[1]-t*0.004]},50,T,4);
+  /* act 9 (15:25): the full episode, local time = T-60 */
+  var t=T-60;
+  g.BAT.forEach(function(p,i){var hit=12+i*0.55,m=dot('bat'+i,'bld',18);m.setLatLng(p);op(m,t>=0&&t<=42?1:T>=102?0:(T>=60?1:0));var ie=m.getElement();if(ie)ie.firstChild.style.background=t>=hit?'#c0392b':'#222';
+    var arc=spr('arc'+i,function(){var mid=[lerp(p[0],G.gad[0],.5)+0.06,lerp(p[1],G.gad[1],.5)-0.04];return L.polyline([p,mid,G.gad],{color:'#ff9a2e',weight:1,dashArray:'2 6',opacity:0})});var firing=t>0.5&&t<hit&&t<17&&T>=60;arc.setStyle({opacity:firing?.55:0});
+    shellArc('shl'+i,p,G.gad,.1,((t*0.45+i*0.37)%1),firing);
+    var b=dot('bm'+i,'bomb',10),bf=(t-(hit-1))/1;if(bf>0&&bf<1&&T>=60){b.setLatLng(p);op(b,1);var e=b.getElement();if(e)e.firstChild.style.transform='translateY('+Math.round(-70*(1-bf*bf))+'px)'}else op(b,0);boom('bx'+i,p,60+hit,1.3,T,1)});
+  var gf=(t%2.2)/2.2;var gh=spr('gadhit',function(){return L.marker(G.gad,{icon:fixedIcon('boom','',46),interactive:false,opacity:0})});op(gh,T>=61&&T<76?(gf<.35?1-gf*2.2:0):0);sc(gh,0.5+gf);
+  var i9=plane('iaf9','#1d5ea8','מטוסי חיל האוויר');if(t>=7.5&&t<=22){var ip;if(t<8.5){ip={p:g.IL,h:Math.atan2(tIAFof(g)[1][1]-g.IL[1],tIAFof(g)[1][0]-g.IL[0])};setPlane(i9,ip.p,ip.h,t-7.5,.5+(t-7.5)*.5)}else if(t<17){ip=pathPos(tIAFof(g),ease((t-8.5)/8.5));setPlane(i9,ip.p,ip.h,1)}else{ip=pathPos([[g.cen[0]+0.06,g.cen[1]+0.02],[32.95,35.25],g.IL],ease((t-17)/5));setPlane(i9,ip.p,ip.h,clamp(22-t,0,1))}}else op(i9,0);
+  var s9=plane('syr9','#b3261e','מטוסי ירוט סוריים'),orb=t>=28&&t<33?(t-28)*1.7:0,sp;if(t>=17&&t<=36){sp=pathPos([g.SY,[33.5,36.4],g.DF],ease(clamp((t-17.5)/10.5,0,1)));var from=[sp.p[0]+Math.sin(orb)*0.03,sp.p[1]+Math.cos(orb)*0.03];
+    if(t>=33.3){var ff=clamp((t-33.3)/3.7,0,1);from=[lerp(from[0],g.GR[0],ff*ff),lerp(from[1],g.GR[1],ff)];setPlane(s9,from,ff*9,t<37?1:0)}else setPlane(s9,from,sp.h+orb,clamp(t<18.5?t-17:1,0,1))}else op(s9,0);
+  smoke('sm9',function(tt){var ff=clamp(tt/3.7,0,1);return [lerp(g.DF[0]+0.01,g.GR[0],ff*ff),lerp(g.DF[1],g.GR[1],ff)]},93.3,T,5);
+  var m9=plane('mir9','#1d5ea8','מיראז\' מטייסת העטלף'),mpos=null;if(t>=21&&t<=42){var h9;if(t<28.5){var pm9=pathPos([g.IL,[32.9,35.3],[33.2,35.8],[g.DF[0]-0.03,g.DF[1]-0.14]],ease(clamp((t-21.5)/7,0,1)));mpos=pm9.p;h9=pm9.h}else if(t<37.5){var o2=(t-28)*1.5+2;mpos=[g.DF[0]-0.03+Math.sin(o2)*0.03,g.DF[1]-0.14+Math.cos(o2)*0.03];h9=o2+Math.PI}else{var pm2=pathPos([[g.DF[0]-0.03,g.DF[1]-0.14],[33.1,35.7],g.IL],ease((t-37.5)/4.5));mpos=pm2.p;h9=pm2.h}setPlane(m9,mpos,h9,t<22?t-21:1)}else op(m9,0);
+  if(t>=31&&t<33.3&&mpos){var sp2=s9.getLatLng();lineSeg('trc9','#ffd24a',[mpos,[lerp(mpos[0],sp2.lat,.9),lerp(mpos[1],sp2.lng,.9)]],(Math.floor(t*10)%2)?1:.4)}else lineSeg('trc9','#ffd24a',[[0,0],[0,0]],0);
+  boom('gr9',g.GR,97,1.4,T,1);xmark('xg9',g.GR,T,97,'הפלה דרומית לדמשק (קירוב)');
+  /* act 10 (16:16): four interceptors, three fall, the fourth flees (arena is schematic) */
+  
+  var a10=T>=102&&T<=118;
+  [0,1,2,3].forEach(function(i){var m=plane('mg10'+i,'#b3261e',i===0?'רביעיית ירוט סורית':null);var tt=T-102;if(a10){var ang=i*1.57+tt*0.9,r=0.05,cx=g.arena[0],cy=g.arena[1];var fall=(i<3)?clamp((tt-(5+i*1.2))/3,0,1):0;var pos=[cx+Math.sin(ang)*r+fall*0.03,cy+Math.cos(ang)*r*1.2+fall*0.02];if(i===3&&tt>8){var fl=clamp((tt-8)/5,0,1);pos=[lerp(pos[0],g.SY[0],fl),lerp(pos[1],g.SY[1],fl)]}
+      setPlane(m,pos,ang+1.57+fall*8,(i<3&&fall>=1)?0:clamp(tt<1?tt:1,0,1))}else op(m,0);
+    smoke('sm10'+i,function(q){var ang=i*1.57+(107+i*1.2-102)*0.9;return [g.arena[0]+Math.sin(ang)*0.05+clamp(q/3,0,1)*0.03,g.arena[1]+Math.cos(ang)*0.06+clamp(q/3,0,1)*0.02]},107+i*1.2,T,i<3?3:0);boom('b10'+i,[g.arena[0]+Math.sin(i*1.57+(107+i*1.2+3-102)*0.9)*0.05+0.03,g.arena[1]+Math.cos(i*1.57+(107+i*1.2+3-102)*0.9)*0.06+0.02],107+i*1.2+3,1.2,T,1)});
+  fly('mir10','#1d5ea8','מיראז\'ים',[{t0:102,t1:116,orbit:[g.arena[0]+0.01,g.arena[1]-0.01]},{t0:116.5,t1:123.5,path:[[g.arena[0]+0.01,g.arena[1]+0.015],[32.95,35.4],g.IL]}],T);
+}
+function op2(l,v){if(l.setStyle){l.setStyle({opacity:v?.8:0,fillOpacity:v?.08:0})}if(v&&!A.E.g.hasLayer(l))A.E.g.addLayer(l)}
+function tIAFof(g){return [g.IL,[32.78,35.2],[g.cen[0]-0.03,g.cen[1]-0.12],g.cen,[g.cen[0]+0.06,g.cen[1]+0.02]]}
+function tChaseOf(g){return [[g.G.kun[0],g.G.kun[1]],[33.3,36.0],[g.G.dam[0]-0.08,g.G.dam[1]-0.12]]}
+})();
+</script>
+</body></html>
