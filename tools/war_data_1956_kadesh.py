@@ -158,12 +158,6 @@ def build_event_file():
             k = int((it.get("t0") if "t0" in it else it["legs"][0]["t0"]) // (DUR + GAP)); it["u"] = T0(k) + DUR
             if it.get("label", "").startswith(("חטיבה 9", "גדוד 88")):      # the two multi-day moves (2-5 Nov) live to the end of the war
                 it["u"] = T0(7) + DUR
-    sys.path.insert(0, str(Path(__file__).resolve().parent))
-    import war_landcheck as _lc           # the owner 10-26: a ground unit's path stays on land between its vertices too (foot soldiers on the sea)
-    _L = _lc.load_mask()
-    for it in ev["scene"]["items"]:
-        if _lc.land_item(it) and not it.get("water_ok") and any(not _lc.near_land(_L, p) for p, _t in _lc.interp_points(it)):
-            _lc.densify_snap(it, _L)
     return ev
 
 def check_quotes(ev, article):

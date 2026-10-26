@@ -4,11 +4,7 @@ the other, reciprocal shells + impact bursts between the nearest pair of opposin
 the arcs are schematic and the card says nothing more precise. The check is tools/test_war_fire.py."""
 import math, os, sys
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-import test_war_event_shown as es, test_war_heavy_losses as hl, test_war_battles as tb, war_landcheck as lc
-_LM = []
-def LM():
-    if not _LM: _LM.append(lc.load_mask())
-    return _LM[0]
+import test_war_event_shown as es, test_war_heavy_losses as hl, test_war_battles as tb
 CONTACT_AIR = 0.5    # air battles: contact range in degrees (fighters close fast)
 CONTACT = 0.2     # degrees (~20 km): forces further apart than this are not in contact
 def sides_pts(items, w0, w1):
@@ -82,12 +78,10 @@ def fire(ev):
         lim = CONTACT_AIR if c.get("unit") == "mig" else CONTACT
         if pr[0] > lim:      # the forces drawn are not in contact at the place: BOTH sides get a schematic force at the place (labelled), as in war_battle_fill
             t0u = a["s"] + 0.3
-            wet = c.get("area") != "sea" and not lc.near_land(LM(), where)       # a place on the sea: ships, never soldiers (R52)
             for far in ("il", "ar"):
                 pos = [round(where[0] + (0.012 if far == "il" else -0.012), 4), round(where[1] + 0.01, 4)]
-                if c.get("area") != "sea" and not wet: pos = [round(x, 4) for x in lc.snap(LM(), pos)]      # a force on land stands on land (checklist 17)
-                sc["items"].append({"type": "walk", "label": (("ספינה ישראלית בקרב" if far == "il" else "ספינת הצד השני בקרב") if (c.get("area") == "sea" or wet) else ("כוח ישראלי בקרב" if far == "il" else "כוח הצד השני בקרב")) + " (סכמטי, מיקום משוער)", "cls": "iaf" if far == "il" else "syr", "sym": "▣", "area": c.get("area") or "all",
-                                    **({} if (c.get("area") == "sea" or wet) else {"trail": "foot"}), "lead": 0, "fill": c["id"], "legs": [{"t0": round(t0u, 2), "t1": round(t0u + 2, 2), "path": [pos, [round(pos[0] + 0.001, 4), round(pos[1] + 0.001, 4)]]}], "u": round(max(a["e"], a["s"] + 12), 2)})
+                sc["items"].append({"type": "walk", "label": (("ספינה ישראלית בקרב" if far == "il" else "ספינת הצד השני בקרב") if c.get("area") == "sea" else ("כוח ישראלי בקרב" if far == "il" else "כוח הצד השני בקרב")) + " (סכמטי, מיקום משוער)", "cls": "iaf" if far == "il" else "syr", "sym": "▣", "area": c.get("area") or "all",
+                                    **({} if c.get("area") == "sea" else {"trail": "foot"}), "lead": 0, "fill": c["id"], "legs": [{"t0": round(t0u, 2), "t1": round(t0u + 2, 2), "path": [pos, [pos[0] + 0.001, pos[1] + 0.001]]}], "u": round(max(a["e"], a["s"] + 12), 2)})
             got = sides_pts(sc["items"], w0, a["s"] + tb.WIN); pr = (anchored_pair(got, where) if placed else nearest_pair(got, where))
         if fired: n += 1; continue        # fire of both sides is already drawn here (another card's); the contact range above is still enforced
         _, pi, pa = pr

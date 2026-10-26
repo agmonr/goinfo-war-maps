@@ -75,12 +75,6 @@ def shift_item(it, d):
     return it
 
 
-# the owner 10-23/24 (rule for ALL war pages: no talks / diplomacy): three Six-Day cards are diplomacy only and are dropped from the merged page - the UN-observer ceasefire attempt (5.6), Syria's ceasefire
-# announcement and the Security Council diplomacy (9.6). Per day: the card ids, the act start times and the log times that belong to them (the day files stay as authored). The four cards that change where
-# forces stop or go (d3-c0, d4-s6, d6-g3, d6-g9) stay.
-DROP = {"1967-06-05": {"cards": {"c5"}, "acts": {96}, "log": {97}}, "1967-06-09": {"cards": {"g0", "g13"}, "acts": {10, 200}, "log": {12, 204}}}
-
-
 def merge(data, cas):
     evs = [json.loads((data / f"{d}-events.json").read_text(encoding="utf-8")) for d, _ in DAYS]
     base = copy.deepcopy(evs[0])
@@ -96,11 +90,7 @@ def merge(data, cas):
         for k, v in e["places"].items():
             places.setdefault(k, v)
         mins = day_minutes(s["acts"])
-        drop = DROP.get(date, {})
         for a, m in zip(s["acts"], mins):
-            if a["s"] in drop.get("acts", ()):               # a dropped (diplomacy) act: the previous act simply runs on over it
-                if acts: acts[-1]["e"] = a["e"] + T0
-                continue
             a2 = dict(a); a2["s"] += T0; a2["e"] += T0
             absm = max(n * 1440 + min(m, 1439), prev_min + 0.01); prev_min = absm
             a2["min"] = absm
@@ -112,7 +102,6 @@ def merge(data, cas):
                 it2["u"] = T0 + s["dur"]        # a unit marker is carried to the end of ITS day, not into the next (the per-day pages do the same)
             items.append(it2)
         for l in s["log"]:
-            if l["t"] in drop.get("log", ()): continue
             l2 = dict(l); l2["t"] += T0; l2["clock"] = f"{label} · {l['clock']}"; log.append(l2)
         sfx += [[t + T0, k] for t, k in s["sfx"]]
         for g in (s.get("control") or {}).get("grow", []):
@@ -129,7 +118,6 @@ def merge(data, cas):
             c["t"] += T0; c["clock"] = f"{label} · {c['clock']}"
             casualties.append(c)
         for c in e["events"]:
-            if c["id"] in drop.get("cards", ()): continue
             c2 = dict(c); c2["id"] = f"d{n + 1}-{c['id']}"
             for k in ("start_min", "end_min"):
                 if isinstance(c2.get(k), (int, float)):
@@ -170,8 +158,6 @@ def build(stage):
     template = (ROOT / "war" / "templates" / "battle-map.html").read_text(encoding="utf-8")
     wb.write(out / "map" / "index.html", wb.map_page(template, b, "https://goinfo.co.il/war/1967/six-days/map/", "../events.json", "anim", wb.credit_html(b, ev, cas, "jun")))
     wb.write(out / "events.json", json.dumps(ev, ensure_ascii=False, indent=1))
-    import ga_inject      # a stand-alone LAN stage has no /src/: the inline host fallback keeps a twin out of GA (10-26), the same step war_build.py runs over its stage
-    pg = out / "map" / "index.html"; pg.write_text(ga_inject.host_fallback(ga_inject.ensure(pg.read_text(encoding="utf-8"))), encoding="utf-8")
     for f in ("daynight.js", "land-mask.json"):
         (out / f).write_bytes((ROOT / "war" / f).read_bytes())
     return ev, out

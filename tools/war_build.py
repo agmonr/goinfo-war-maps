@@ -616,15 +616,6 @@ def main():
     (stage / "sound").mkdir(parents=True, exist_ok=True)      # movement-sound loops (CC0, war/sound/SOURCES.md): fetched by war/daynight.js only after sound is turned on
     for f in ("tank.mp3", "jet.mp3", "march.mp3"):
         shutil.copy(Path(__file__).resolve().parent.parent / "war" / "sound" / f, stage / "sound" / f)
-    # Rule 13 (the owner 10-25): every war page is measured, whichever generator wrote it - the hub, the overview, the year pages and the text pages come from page(), not from the map template.
-    import ga_inject
-    n = 0
-    for p in stage.rglob("*.html"):
-        t = p.read_text(encoding="utf-8")
-        t2 = ga_inject.host_fallback(ga_inject.ensure(t))
-        if t2 != t:
-            p.write_text(t2, encoding="utf-8"); n += 1
-    print(f"measurement block added to {n} war page(s); every page now carries gtag + ga-guard + host-fallback + eventlog")
     print(f"wrote hub + {len(years)} year page(s) into {stage}")
 
 if __name__ == "__main__":
