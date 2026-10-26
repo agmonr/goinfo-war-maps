@@ -7,7 +7,6 @@ Sources (every quote segment is asserted by `war_data_1973_yomkippur.py --check-
            facts + short attributed quotes + the link, page number per card (the page of the PDF file). No long passages.
   wiki   : he.wikipedia articles of the category "Battles of the Egyptian front in the Yom Kippur War", each pinned to its revision id (CC BY-SA 4.0).
 Rules as on the rest of the page: a move is drawn only where a quote names the unit and the place; unknown stays blank; paths are schematic and labelled so."""
-import math
 import os
 from pathlib import Path
 
@@ -75,7 +74,6 @@ WIKI = {
     "nisan": ('מעוז ניסן', 43036446),
     "mezakh": ('מוצב המזח', 44038104),
     "rasghareb": ("תקיפת מעגן ראס-ע'ריב", 43619832),
-    "sinai252": ('עוצבת סיני', 44096109),          # the owner 10-26: "add the data from here about division 252" (the Sinai Division article)
 }                                                    # the 26 members of the category, each with the revision id of the text we quote (he.wikipedia, CC BY-SA 4.0)
 for _k in WIKI:
     SRC_FILES[_k] = f"wiki/{_k}.txt"                 # plain-text extracts of those revisions (TextExtracts API), kept outside git
@@ -229,8 +227,6 @@ def add(g):
     place("brig25", "אזור המארב לחטיבה 25", 30.33021306, 32.45773306, "ar", "המארב לחטיבה 25 המצרית")
     place("sarap", "סרפאום", 30.48, 32.32, "ar", "קרב סרפאום")
     place("banha", "גשר בנהא (קירוב)", 30.46, 31.18, "ar", basis="הערך אינו מציין קואורדינטות; הנקודה היא מרכז העיר בנהא (קירוב שלנו)")
-    place("minat", "מעגן מינת אל-ביידה (קירוב)", 35.60, 35.74, "ar", basis="הערך ״הפגזת החוף הסורי״ נוקב במעגן אך אינו מציין קואורדינטות; הנקודה היא קירוב שלנו צפונית לנמל לטקיה")
-    place("baniyas", "מסוף הדלק בבניאס (קירוב)", 35.18, 35.94, "ar", basis="הערך נוקב במסוף הדלק בבניאס אך אינו מציין קואורדינטות; הנקודה היא קירוב שלנו")
     place("mabuk", "ואדי מבעוק (קירוב)", 29.89, 32.60, "ar", basis="הערך: כעשרה ק״מ דרומית-מזרחית לעיר סואץ; הנקודה היא קירוב שלנו")
     place("b130", "מזרח האגם המר הקטן (קירוב)", 30.20, 32.55, "ar", basis="הערך: ממזרח לאגם המר הקטן; הנקודה היא קירוב שלנו")
 
@@ -334,7 +330,7 @@ def add(g):
     def unit(label, cls, pos, t, q=None, sk=None):
         """one unit symbol at a schematic place: IL = blue square (cls iaf), Arab = red (cls syr); the label says so, the source gives sectors and no coordinates"""
         return {"type": "walk", "label": label + " (סכמטי)", "cls": cls, "sym": "▣", "area": "sinai" if pos[1] < 34 else "golan", "trail": "tank",
-                "legs": [{"t0": t, "t1": t + 2, "path": [pos, [pos[0] + 0.001, pos[1] + 0.001]]}], "hold": 1, **({"q": q, "sk": sk} if q else {})}
+                "legs": [{"t0": t, "t1": t + 2, "path": [pos, [pos[0] + 0.001, pos[1] + 0.001]]}], **({"q": q, "sk": sk} if q else {})}
 
     def oob(cid, src, day, clock, minute, area, title, quote, units, **kw):
         t = at(day, minute)
@@ -398,9 +394,9 @@ def add(g):
     for k, name, pos, fd, fm, lab, q in ST:
         short = f"ויקיפדיה: {WIKI[k][0]}"
         end_hold = at(fd, fm) if fd is not None else END
-        ITEMS.append({"type": "mark", "at": list(pos), "t0": t0, "t1": end_hold, "label": f"{name}: מוחזק", "area": "sinai", "st": "held", "water_ok": True, "q": HOLD_Q[k], "sk": k, "s": short})
+        ITEMS.append({"type": "mark", "at": list(pos), "t0": t0, "t1": end_hold, "label": f"{name}: מוחזק", "area": "sinai", "st": "held", "q": HOLD_Q[k], "sk": k, "s": short})
         if fd is not None:
-            ITEMS.append({"type": "mark", "at": list(pos), "t0": at(fd, fm), "t1": None, "label": f"{name}: {lab}", "area": "sinai", "st": "fell", "water_ok": True, "q": q, "sk": k, "s": short})
+            ITEMS.append({"type": "mark", "at": list(pos), "t0": at(fd, fm), "t1": None, "label": f"{name}: {lab}", "area": "sinai", "st": "fell", "q": q, "sk": k, "s": short})
         else:
             ITEMS[-1]["label"] = f"{name}: מוחזק עד סוף המלחמה"
 
@@ -432,8 +428,7 @@ def add(g):
            'הקרב התרחש בלילה שבין 6 ל-7 באוקטובר, בקרבת נמל פורט סעיד [...] בקרב הוטבע סטי"ל מצרי מדגם אוסה', geom=[mk("portsaid", "bomb")], prec="approximate"); ITEMS.append(boom("portsaid", t, "sea", 1))
     wk("r8", "coast", "הפגזת החוף הסורי ב-10–11 באוקטובר", 4, "ליל 10–11 באוקטובר", 1380, "sea", "ship", "ספינות סער ישראליות מפגיזות יעדים צבאיים ואסטרטגיים בחוף סוריה",
        'הפגזת החוף הסורי במלחמת 1973 הייתה סדרת תקיפות שנערכו בלילה שבין 10 ל-11 באוקטובר, בלילה החמישי של מלחמת יום הכיפורים. במהלכן הופגזו יעדים צבאיים ואסטרטגיים סוריים על ידי ספינות סער ישראליות',
-       geom=[mk("latakia", "bomb"), mk("minat", "bomb"), mk("baniyas", "bomb")], prec="approximate",
-       nopos=["מיקומי הספינות: סכמטיים (הערך נותן טווחים וכיוונים, לא קואורדינטות); מעגן מינת אל-ביידה ומסוף בניאס: קירוב שלנו"])
+       prec="approximate", nopos=["היעדים לאורך החוף: אינם נקודה אחת"])
     t = wk("r9", "tartus", "קרב טרטוס", 5, "ליל 11–12 באוקטובר", 1380, "sea", "ship", "קרב טרטוס: ספינות סער מפגיזות את נמל טרטוס ואת מכלי הדלק שלידו",
            'קרב טרטוס במלחמת יום הכיפורים הוא סדרת תקיפות שנערכו בלילה השישי של מלחמת יום הכיפורים, הלילה שבין 11 ל-12 באוקטובר 1973. במהלכן הופגז נמל טרטוס ומכלי הדלק בקרבתו על ידי ספינות סער של חיל הים של ישראל',
            geom=[mk("tartus", "bomb")], prec="approximate"); ITEMS.append(boom("tartus", t, "sea", 1))
@@ -468,22 +463,6 @@ def add(g):
         return {"type": "mark", "at": pos, "t0": TT(m), "t1": TT(m) + dur, "label": label, "area": area, "q": q, "sk": sk, "s": (f"ויקיפדיה: {WIKI[sk][0]}" if sk in WIKI else "ויקיפדיה: מלחמת יום הכיפורים" if sk == "main" else "המחלקה להיסטוריה בצה״ל, ״יסודות״ 5, עמ׳ 25")}
 
     RED, BLU = "#b3261e", "#1d5ea8"
-
-    # ---- the Syrian coast shelling, night 10-11 Oct (card r8; the owner 10-26: "it must look like the Jordanian artillery in the Six-Day page"): the SAME 'shell' item (muzzle burst at the ship, arc, impact burst at the target),
-    # fired by Israeli Saar boats drawn as missile-boat symbols. Targets, boats and clock times are the article's own timeline (11.10: 00:18 coast entry, 01:30 Latakia port opened, 01:38 Banias tanks, 02:40 end of fire at Latakia);
-    # positions are schematic (the article gives distances: ~2 km off Latakia, 11 -> 6 km at Mina al-Baida, 6 km at Banias) and the two targets without article coordinates are marked as our approximation.
-    SHELL = [   # name, boat position (schematic), target, from (day, h, m), to (day, h, m), approach from, leave by
-        ("אח״י חץ", [35.52, 35.735], [35.52, 35.775], (5, 1, 30), (5, 2, 40)), ("אח״י חיפה", [35.51, 35.735], [35.505, 35.78], (5, 1, 30), (5, 2, 40)), ("אח״י חרב", [35.53, 35.735], [35.52, 35.77], (5, 1, 31), (5, 2, 40)),
-        ("אח״י געש", [35.59, 35.62], [35.60, 35.74], (5, 1, 30), (5, 2, 10)), ("אח״י סופה", [35.61, 35.62], [35.605, 35.745], (5, 1, 32), (5, 2, 10)),
-        ("אח״י קשת", [35.19, 35.86], [35.18, 35.94], (5, 1, 38), (5, 2, 10)), ("אח״י רשף", [35.17, 35.86], [35.185, 35.935], (5, 1, 50), (5, 2, 10))]
-    for n, (nm, bp, tg, fr, to) in enumerate(SHELL):
-        t0, t1 = TT(M(*fr)), TT(M(*to))
-        ITEMS.append({"type": "walk", "label": f"{nm} (סער, סכמטי)", "cls": "iaf", "sym": "▣", "area": "sea", "sk": "coast", "hold": 1,
-                      "legs": [{"t0": TT(M(5, 0, 0)), "t1": t0 - 0.2, "path": [[bp[0] + 0.1, bp[1] - 0.3], bp]}, {"t0": t1 + 0.4, "t1": t1 + 2.6, "path": [bp, [bp[0], bp[1] - 0.3]]}]})
-        ITEMS.append({"type": "shell", "from": bp, "to": tg, "t0": t0, "t1": t1, "period": 1.1 + 0.15 * (n % 3), "lift": 0.03, "area": "sea", "ship": 1, "side": "iaf"})
-        for q in range(0, int((t1 - t0) / 0.5)):
-            ITEMS.append(boom([round(tg[0] + ((q * 7 + n * 3) % 5 - 2) * 0.004, 4), round(tg[1] + ((q * 3 + n) % 5 - 2) * 0.004, 4)], t0 + 0.6 + q * 0.5 + n * 0.07, "sea", 1))
-    ITEMS.append(tag(M(5, 1, 30), [35.52, 35.775], "11.10 01:30: ספינות סער מפגיזות את נמל לטקיה (ממרחק כ-2 ק״מ); מעגן מינת אל-ביידה ומכלי הדלק בבניאס מופגזים בו-זמנית", 'התכנון כלל לתקוף באזור החוף הסורי שלוש מטרות: המעגן הצבאי במינט אל ביידה, נמל לטקיה וחוות מכלי הדלק בבניאס', "coast", 14))
     # ---- Latakia, 6-7 Oct (the article's own clock) ----
     HF, RH = [32.85, 34.92], [33.30, 35.02]
     route = [HF, [33.0, 34.5], [33.9, 34.75], [34.55, 35.1]]
@@ -580,7 +559,6 @@ def add(g):
                                {"t0": TT(D + 324), "t1": TT(D + 335), "path": [[33.03, 34.95 + off], [33.02, 35.10]]}]})
     ITEMS += [shot(D + 322, D + 324, [33.03, 34.97], [33.02, 34.90], RED, "הפצצות נופלות לים מול נהריה"), boom([33.02, 34.90], TT(D + 324), "golan", 1), boom([33.0058, 35.0956], TT(D + 335), "golan", 2)]
     ITEMS[-3]["area"] = ITEMS[-2]["area"] = "golan"
-    ITEMS[-3]["trail"] = None      # R52 (the owner 10-26): bombs falling into the sea: no foot soldier / footstep trail at sea; the dot + the bursts show it
     ITEMS.append(tag(D + 335, [33.12, 35.25], "05:35: אחד המטוסים מתפוצץ באוויר מעל נהריה; הפיצוץ משבר זגוגיות, אין נפגעים בצד הישראלי", 'לערך התפוצץ אחד המטוסים באוויר ושבריו התפזרו ברדיוס של 4 קילומטר', "haifa", 12))
 
     # ---------------- the AIR WAR layer (the owner 10-23: "go" - the raids visible, animated) ----------------
@@ -589,7 +567,7 @@ def add(g):
     VIEWS["syria"] = [[33.0, 34.6], [35.3, 37.0]]
     HZ, RD, TN = [31.76, 34.73], [32.66, 35.18], [31.84, 34.82]      # Hatzor, Ramat David, Tel Nof (well-known airbases, approximate)
 
-    def jets(label, side, area, n, a, b, m0, m1, back=True, spread=0.05, hold=3, down=None):
+    def jets(label, side, area, n, a, b, m0, m1, back=True, spread=0.05, hold=3):
         """n aircraft from a to b between absolute minutes m0..m1, then back (the return takes the same time)"""
         out = []
         for i in range(n):
@@ -598,19 +576,7 @@ def add(g):
             legs = [{"t0": TT(m0 + i), "t1": TT(m1 + i), "path": [pa, pb]}]
             if back:
                 legs.append({"t0": TT(m1 + i + hold), "t1": TT(m1 + i + hold + (m1 - m0)), "path": [pb, pa]})
-            it = {"type": "fly", "side": side, "label": f"{label} {i + 1} (סכמטי)" if n > 1 else f"{label} (סכמטי)", "area": area, "off": None, "legs": legs}
-            if down and i in down:
-                # a shot-down aircraft (the owner 10-26): only where the source says so. down[i] = (leg index, fraction of that leg when it is hit, fall distance in degrees, fall seconds); the hit point is on the drawn leg,
-                # the crash point a little further along its heading: both are OUR approximation (the source gives neither place nor time).
-                li, u, dist, dur = down[i]
-                lg = legs[li]; p0, p1 = lg["path"]
-                e = 2 * u * u if u < .5 else 1 - (-2 * u + 2) ** 2 / 2
-                hit = [p0[0] + (p1[0] - p0[0]) * e, p0[1] + (p1[1] - p0[1]) * e]
-                d = math.hypot(p1[0] - p0[0], (p1[1] - p0[1]) * 0.84) or 1
-                at = [round(hit[0] + (p1[0] - p0[0]) / d * dist, 4), round(hit[1] + (p1[1] - p0[1]) * 0.84 / d * dist, 4)]
-                it["down"] = {"t": round(lg["t0"] + (lg["t1"] - lg["t0"]) * u, 2), "at": at, "dur": dur}
-                it["label"] = it["label"].replace(" (סכמטי)", " (הופל, סכמטי)")
-            out.append(it)
+            out.append({"type": "fly", "side": side, "label": f"{label} {i + 1} (סכמטי)" if n > 1 else f"{label} (סכמטי)", "area": area, "off": None, "legs": legs})
         return out
 
     def flashes(pts, m, area, step=1, big=1):
@@ -631,8 +597,7 @@ def add(g):
                      'במהלך ההתקפה הוכנסו כל 31 סוללות הטק"א הסוריות שהיו פרושות לאורך חזית רמת הכולן למצב נצור וזאת במטרה למנוע הפלה של מטוסים סוריים באש ידידותית', "syair", 14))
     # 3) Ofira air battle, ~14:00 (card w2)
     ITEMS += jets("פנטום ישראלי", "iaf", "sinai", 2, [27.91, 34.33], [27.80, 33.80], M(0, 13, 58), M(0, 14, 3), spread=0.05, hold=1)
-    ITEMS += jets("רביעיית מיג מצרית", "syr", "sinai", 7, [27.90, 32.90], [27.88, 33.95], M(0, 13, 56), M(0, 14, 2), spread=0.07, hold=0, back=False,
-                  down={i: (0, 0.62 + 0.04 * i, 0.05, 2.4) for i in range(7)})   # w2: "הופלו שבעה מטוסי מיג" - all seven fall
+    ITEMS += jets("רביעיית מיג מצרית", "syr", "sinai", 7, [27.90, 32.90], [27.88, 33.95], M(0, 13, 56), M(0, 14, 2), spread=0.07, hold=0, back=False)
     ITEMS += flashes([[27.84, 33.70], [27.88, 33.82], [27.80, 33.60], [27.86, 33.90]], M(0, 14, 2), "sinai", 1, 2)
     ITEMS.append(tag(M(0, 14, 4), [28.10, 33.60], "קרב אופירה: שני פנטומים מול 28 מיגים; כשש דקות; שבעה מיגים מופלים", 'בסיומו של הקרב, שנמשך כשש דקות, הופלו שבעה מטוסי מיג', "ofira", 12))
     # 4) Dugman 5 (Syria) + Tagar (Egypt), 7 Oct morning (card i20)
@@ -646,8 +611,7 @@ def add(g):
     ITEMS += flashes([[33.48, 36.22], [33.50, 36.25], [33.46, 36.20]], M(3, 12, 15), "golan", 1, 2)
     ITEMS.append(tag(M(3, 12, 15), [33.70, 36.60], "9.10 בצהרים: תקיפת בניין המטכ״ל הסורי בדמשק", 'בצהרי יום שלישי, 9 באוקטובר תקף חיל האוויר את בניין המטכ"ל הסורי ובניין מפקדת חיל האוויר הסורי בדמשק', "coast", 12))
     # 6) Bnaha bridge, 11 Oct (card w11)
-    ITEMS += jets("פנטום ישראלי", "iaf", "sinai", 8, TN, [30.46, 31.18], M(5, 13, 0), M(5, 13, 25), spread=0.05,
-                  down={3: (1, 0.45, 0.06, 2.6), 6: (1, 0.62, 0.06, 2.6)})   # w11: "הופלו שניים בקרב אוויר בדרכם חזרה" - two of the eight, on the RETURN leg (which two, and where, is not in the source)
+    ITEMS += jets("פנטום ישראלי", "iaf", "sinai", 8, TN, [30.46, 31.18], M(5, 13, 0), M(5, 13, 25), spread=0.05)
     ITEMS += flashes([[30.47, 31.20], [30.45, 31.17]], M(5, 13, 25), "sinai", 1, 2)
     ITEMS.append(tag(M(5, 13, 40), [30.95, 31.55], "11.10: הפצצת גשר בנהא; שני פנטומים מופלים בקרב אוויר בדרך חזרה", 'המבצע בוצע באמצעות שמונה מטוסי F-4 פנטום שמהם הופלו שניים בקרב אוויר בדרכם חזרה', "banha", 12))
     # 7) Al-Maza airfield, 13 Oct (new card am)
@@ -656,54 +620,11 @@ def add(g):
            geom=[mk("damascus", "bomb")], prec="approximate", view="syria", nopos=["שעת ההפצצה: אינה בציטוט; מסומן 13 באוקטובר אחר הצהריים; הציור סכמטי"])
     ITEMS += jets("פנטום ישראלי", "iaf", "golan", 4, RD, [33.43, 36.23], M(6, 14, 0), M(6, 14, 15), spread=0.07)
     ITEMS += [{"type": "shell", "from": [33.07, 35.76], "to": [33.43, 36.23], "t0": TT(M(6, 14, 20)), "t1": TT(M(6, 14, 32)), "period": 1.4, "lift": .04, "area": "golan"}] + flashes([[33.43, 36.23], [33.44, 36.25]], M(6, 14, 15), "golan", 1, 2)
-    # 8) Mansoura air battle, 14 Oct = day 8 (card w14; the earlier drawing used day 7 = 13 Oct and two small groups). the owner 10-26: "every described battle must be animated; this air battle can be assumed over Egyptian territory".
-    # The article's own clock and numbers: 48 Phantoms (squadrons: HaAhat -> Mansoura, Bat/Orange Tail -> Tanta) take off at noon, low over the Mediterranean, in sixes; 15:15 detected (20 aircraft reported), 16 MiG-21 scrambled;
-    # 15:30 about 60 aircraft on three routes, 16 more MiG-21 from Mansoura + 8 from Tanta; 15:38 second wave of 16 Phantoms, more interceptors from Abu Hamad; ~53 minutes, ~160 fighters; 5 Egyptian MiGs shot down (one crashed
-    # in the fight) + 2 destroyed on the ground; one Israeli Phantom shot down by mistake by an Israeli Nesher (crew rescued from the sea). Places: Mansoura has the article's coordinates; Tanta and Abu Hamad have none in the article
-    # (our approximation, labelled); the flight lines and the dogfight area are schematic.
-    MAN, TAN, ABU = [31.04, 31.38], [30.79, 31.00], [30.55, 31.67]
-    SEA = [[31.60, 34.20], [31.72, 32.80], [31.75, 31.80]]
-    def fl(label, side, legs, area="sinai", down=None):
-        it = {"type": "fly", "side": side, "label": label, "area": area, "off": None, "legs": legs}
-        if down: it["down"] = down
-        return it
-    def lg(m0, m1, path): return {"t0": TT(m0), "t1": TT(m1), "path": path}
-    def orb(m0, m1, c): return {"t0": TT(m0), "t1": TT(m1), "orbit": c}
-    # Israeli waves: low over the sea, then south onto the airfields
-    for k, (nm, tgt, n) in enumerate((("טייסת האחת: 8 פנטומים נגד אל-מנצורה", MAN, 4), ("טייסת העטלף: פנטומים נגד טנטא", TAN, 4), ("טייסת אבירי הזנב הכתום: פנטומים נגד טנטא", TAN, 4))):
-        for i in range(n):
-            o = (i - (n - 1) / 2) * 0.06
-            legs = [lg(M(8, 14, 20) + i * .3, M(8, 15, 20) + i * .3, [[SEA[0][0] + o, SEA[0][1]], [SEA[1][0] + o, SEA[1][1]], [SEA[2][0] + o, SEA[2][1] + k * .25]]),
-                    lg(M(8, 15, 20) + i * .3, M(8, 15, 32) + i * .3, [[SEA[2][0] + o, SEA[2][1] + k * .25], [tgt[0] + 0.1 + o, tgt[1] + 0.05]]),
-                    orb(M(8, 15, 32) + i * .3, M(8, 16, 12) + i * .3, [tgt[0] + 0.12 + o * .5, tgt[1] + 0.12]),
-                    lg(M(8, 16, 12) + i * .3, M(8, 16, 30) + i * .3, [[tgt[0] + 0.12 + o * .5, tgt[1] + 0.12], [31.7, 32.5], [31.6, 34.2]])]
-            ITEMS.append(fl(f"{nm} ({i + 1}, סכמטי)", "iaf", legs))
-    for i in range(4):          # second wave: 16 Phantoms at 15:38 (four symbols)
-        o = (i - 1.5) * 0.07
-        legs = [lg(M(8, 14, 50) + i * .3, M(8, 15, 38) + i * .3, [[SEA[0][0] + o, SEA[0][1]], [31.80 + o, 32.30], [31.30 + o, 31.60]]), orb(M(8, 15, 38) + i * .3, M(8, 16, 14) + i * .3, [31.22 + o * .5, 31.45]),
-                lg(M(8, 16, 14) + i * .3, M(8, 16, 32) + i * .3, [[31.22 + o * .5, 31.45], [31.75, 32.4], [31.6, 34.2]])]
-        ITEMS.append(fl(f"גל שני: 16 פנטומים ({i + 1}, סכמטי)", "iaf", legs, down=({"t": TT(M(8, 16, 2)), "at": [31.32, 31.50], "dur": 2.4} if i == 2 else None)))
-        if i == 2: ITEMS[-1]["label"] = "גל שני: פנטום (הופל בטעות על ידי נשר ישראלי; הצוות צנח לים וחולץ, סכמטי)"
-    # Egyptian interceptors: 16 in the air at 15:15, 16 more from Mansoura and 8 from Tanta at 15:30, more from Abu Hamad at 15:38; five are shot down (the source: "הופלו חמישה מיגים מצריים")
-    SD = {1: .3, 5: .5, 9: .4, 13: .6, 15: .5}
-    for i in range(16):
-        base = MAN if i % 3 else TAN if i % 3 == 0 and i % 2 else ABU
-        o = (i % 4 - 1.5) * 0.06
-        hit = SD.get(i)
-        legs = [lg(M(8, 15, 15 if i < 6 else 30 if i < 13 else 38) + i * .2, M(8, 15, 31 if i < 6 else 40 if i < 13 else 46) + i * .2, [[base[0] + o, base[1] + .05], [31.28 + o * .5, 31.40 + (i % 5) * .05]]),
-                orb(M(8, 15, 31 if i < 6 else 40 if i < 13 else 46) + i * .2, M(8, 16, 22) + i * .2, [31.25 + o * .5, 31.42 + (i % 5) * .05]),
-                lg(M(8, 16, 22) + i * .2, M(8, 16, 30) + i * .2, [[31.25 + o * .5, 31.42 + (i % 5) * .05], [base[0] + o, base[1] + .05]])]
-        dn = None
-        if hit is not None:
-            dn = {"t": TT(M(8, 15, 40 + 4 * list(SD).index(i))), "at": [round(31.18 + o * .5, 3), round(31.45 + (i % 5) * .05, 3)], "dur": 2.4}
-        ITEMS.append(fl(f"מיג 21 מצרי {i + 1}{' (הופל, סכמטי)' if dn else ' (סכמטי)'}", "syr", legs, down=dn))
-    ITEMS += flashes([[31.30, 31.50], [31.22, 31.38], [31.35, 31.42], [31.18, 31.55], [31.28, 31.30], [31.12, 31.40]], M(8, 15, 36), "sinai", 6, 2)
-    ITEMS.append({"type": "wreck", "at": MAN, "t": TT(M(8, 15, 34)), "side": "ar", "n": 2, "label": "שני מטוסי מיג 21 הושמדו על הקרקע בהפצצות (סכמטי; השדה לא צוין בערך)"})
-    ITEMS.append(tag(M(8, 15, 15), [31.55, 31.55], "14.10 15:15: 48 פנטומים טסים נמוך מעל הים; המצרים מגלים אותם ומזניקים 16 מיג 21", 'בשעה 15:15 נתגלו המטוסים על ידי המצרים ונשלחה התרעה בדבר 20 מטוסים שטסים לכיוון הדלתא', "mansoura", 14))
-    ITEMS.append(tag(M(8, 15, 38), [31.40, 31.60], "15:38: גל תקיפה שני של 16 פנטומים; קרבות אוויר המוניים של עשרות מטוסים מכל צד", 'בשעה 15:38 התריעה יחידת המכ"ם האווירי המצרית על 16 מטוסים ישראלים נוספים שמתקרבים בגובה נמוך מאוד כגל תקיפה שני', "mansoura", 14))
-    ITEMS.append(tag(M(8, 16, 20), [31.10, 31.20], "בסך הכל הופלו חמישה מיגים מצריים; הקרב נמשך כ-53 דקות, כ-160 מטוסי קרב משני הצדדים", 'הקרב כולו נמשך כ־53 דקות, השתתפו בו כ־160 מטוסי קרב משני הצדדים', "mansoura", 14))
-    # y19 (11.10): the IDF attacks into Syria toward Damascus - the Syrian forces it fights are drawn on the road (schematic: the card says the direction and the end point are not in the source)
-    ITEMS.append({"type": "walk", "label": "כוחות סוריים בדרך לדמשק (סכמטי, מיקום משוער)", "cls": "syr", "sym": "▣", "area": "golan", "trail": "foot", "hold": 1, "lead": 0, "legs": [{"t0": TT(7800 + 10), "t1": TT(7800 + 12), "path": [[33.30, 36.10], [33.31, 36.11]]}]})
+    # 8) Mansoura air battle, 14 Oct (card w14)
+    ITEMS += jets("פנטום ישראלי", "iaf", "sinai", 6, TN, [31.04, 31.38], M(7, 13, 30), M(7, 13, 50), spread=0.08)
+    ITEMS += jets("מיג 21 מצרי", "syr", "sinai", 4, [30.80, 30.90], [31.00, 31.70], M(7, 13, 45), M(7, 13, 55), spread=0.08, back=False)
+    ITEMS += flashes([[31.05, 31.45], [31.00, 31.55], [31.08, 31.35]], M(7, 13, 55), "sinai", 1, 2)
+    ITEMS.append(tag(M(7, 13, 55), [31.45, 31.10], "14.10: קרב אל-מנצורה; מוכנים 48 פנטומים נגד שדות התעופה בדלתא, ובמקום זה קרבות אוויר", 'מטרת חיל האוויר הישראלי הייתה תקיפת שדות תעופה חשובים בעומק מצרים, אך לנוכח שיגור מטוסי ירוט מצריים ניהלו המטוסים הישראלים קרבות אוויר', "mansoura", 12))
     # 9) Mafatzah, 17-22 Oct (card w20)
     for d, tgt, nm in ((11, [30.59, 32.27], "מפצח 21: אסמאעיליה"), (12, [30.85, 32.30], "מפצח 22: קנטרה")):
         ITEMS += jets("פנטום ישראלי " + nm, "iaf", "sinai", 4, TN, tgt, M(d, 13, 0), M(d, 13, 20), spread=0.06)
@@ -738,47 +659,9 @@ def add(g):
         ITEMS += flashes([pos, [pos[0] + 0.01, pos[1] + 0.02]], M(0, 14, 0) + 4, "sinai", 6, 1)
     ITEMS.append(tag(M(0, 14, 0), [31.30, 32.55], "14:00: הפגזה כבדה על כל קו המעוזים; מעוזי הצפון נתקפים בהתקפת מלקחיים", 'בצהרי יום הכיפורים פתחו המצרים בהתקפת מלקחיים על המעוז כולו', "orkal", 12))
     # (d) the helicopter commando landings in Sinai (w4: 5-6 Mi-8 to Romani at 17:30; w5: the big landing in the evening, 46 helicopters)
-    # the owner 10-26 ("show the helicopters"): before this the six helicopters were GREY aircraft silhouettes (fly items with the Egyptian side name, which the template colours grey) that vanished at 17:30 with a flash,
-    # and no commando was drawn. Now: 6 red helicopter icons (walk items: heading = direction of travel) fly in from west of the canal 17:20-17:30, stay on the ground at the landing point until 17:45
-    # (schematic: the source gives the landing but not how long they stayed), and the commando company (red infantry symbol) appears at the landing point at 17:30 and stays to the end of the day.
-    # The landing place is the place the Wikipedia article gives for Romani (31.02175N 32.66785E); the exact LZ and the line of flight are ours (approximate).
-    for i in range(6):
-        o = (i - 2.5) * 0.012
-        ITEMS.append({"type": "walk", "label": f"מסוק סער מצרי מדגם מי-8 {i + 1} (נחיתה ברומני, סכמטי)", "cls": "syr", "sym": "▣", "area": "sinai",
-                      "legs": [{"t0": TT(M(0, 17, 20) + i * 0.4), "t1": TT(M(0, 17, 30) + i * 0.4), "path": [[31.00 + o, 32.15], [31.02175 + o, 32.66785 - abs(o) * 0.5]]}], "u": TT(M(0, 17, 45)), "lead": 0.3, "sk": "romani"})
-    ITEMS.append({"type": "walk", "label": "פלוגת קומנדו מצרית (הונחתה ברומני, מיקום משוער)", "cls": "syr", "sym": "▣", "area": "sinai", "trail": "foot",
-                  "legs": [{"t0": TT(M(0, 17, 30) + 3), "t1": TT(M(0, 17, 30) + 5), "path": [[31.02175, 32.66785], [31.0225, 32.6685]]}], "lead": 0, "sk": "romani"})
+    ITEMS += jets("מסוק סער מצרי (נחיתה ברומני)", "syr", "sinai", 6, [30.90, 32.10], [31.02, 32.67], M(0, 17, 12), M(0, 17, 30), spread=0.04, back=False)
     ITEMS += flashes([[31.02, 32.67]], M(0, 17, 30), "sinai", 1, 1)
-    # the owner 10-26 ("after the heliborne-landings card there is no animation"): the camera alternated between the fronts all day 1 (the Golan turn showed nothing while the landing flew) and the ten helicopters flew
-    # 18:20-18:50, BEFORE the card's own act (18:30). Now: the alternation ends when the 17:30 card begins (the cards' own views take over), the helicopters fly 18:30-18:55 (the card's minute), stay on the ground to
-    # 19:20, and the landed commando (red infantry symbols, schematic - the source gives no landing places) stays to the end of the day.
-    for i in range(10):        # w5, the big landing (46 helicopters in the source; ten schematic symbols): red, heading = travel
-        o = (i - 4.5) * 0.1
-        ITEMS.append({"type": "walk", "label": f"מסוק סער מצרי (אחד מ-46 בנחיתה הגדולה) {i + 1} (סכמטי)", "cls": "syr", "sym": "▣", "area": "sinai",
-                      "legs": [{"t0": TT(M(0, 18, 30) + i * 0.5), "t1": TT(M(0, 18, 55) + i * 0.5), "path": [[30.60 + o, 32.00 - o * 0.5], [30.45 + o * 0.6, 33.10]]}], "u": TT(M(0, 19, 20)), "lead": 0.3, "sk": "commando"})
-    for i in range(5):
-        o = (i - 2) * 0.12
-        ITEMS.append({"type": "walk", "label": f"קומנדו מצרי: נחיתה במסוקים {i + 1} (סכמטי, מיקום משוער)", "cls": "syr", "sym": "▣", "area": "sinai", "trail": "foot", "lead": 0, "sk": "commando",
-                      "legs": [{"t0": TT(M(0, 18, 57) + i), "t1": TT(M(0, 18, 57) + i) + 2, "path": [[30.45 + o * 0.6, 33.10], [30.46 + o * 0.6, 33.12]]}]})
-    # the owner 10-26 event audit (tools/war_event_audit.py): five cards had a place in the data but nothing drawn there at the card's time. Each gets a labelled marker at ITS OWN place (the card's geometry), at the card's minute.
-    for sk, pid, mn, area, lab, q in [
-        ("main", "hermon", 6360, "golan", "10.10: הסורים נדחקו מכל השטחים, מוצב החרמון נשאר בידיהם", "ב-10 באוקטובר הושלמה הדיפת הסורים מכל השטחים שכבשו בתחילת המלחמה, למעט מוצב החרמון"),
-        ("main", "hermon", 22980, "golan", "21–22.10: גולני כובשת את מוצב החרמון", "בקרב קשה ורב נפגעים, שנערך ב-21–22 באוקטובר ונמשך 12 שעות, כבש כוח של חטיבת גולני את מוצב החרמון"),
-        ("mafatzah", "ismailia", 16680, "sinai", "17.10: מפצח 21 — תקיפה נגד מערך הטק״א באסמאעיליה", "מפצח 21 ב-17 באוקטובר 1973 נגד מערך הטק\"א (טילי קרקע-אוויר) בגזרת אסמאעיליה"),
-        ("mafatzah", "qantara", 16680 + 1440, "sinai", "18.10: מפצח 22 — תקיפה נגד מערך הטק״א בקנטרה", "מפצח 22 ב-18 באוקטובר נגד מערך הטק\"א בקנטרה"),
-        ("main", "damascus", 7800, "golan", "11.10: צה״ל תוקף לתוך סוריה; כיוון דמשק (הנקודה סכמטית)", "ב-11 באוקטובר פתח צה\"ל במתקפה לתוך שטח סוריה, ותוך יומיים הגיע למרחק 35 ק\"מ (טווח תותחים) מנמל התעופה הבין-לאומי של דמשק"),
-        ("orkha", "sarap", 19440, "sinai", "19.10: קרב אורחה ליד סרפאום", "הקרב התחולל ב-19 באוקטובר 1973 סמוך לכפר המצרי סרפאום, בין חטיבת שריון 14 לבין חיילי הצבא המצרי")]:
-        ITEMS.append(tag(mn, P[pid], lab, q, sk, 12, area))
-    # same audit: seven cards the sources give NO place for (their own no_position lines say so). Drawn as a labelled caption on the map at the card minute, not at an invented place.
-    for mn, area, txt in [
-        (3960, 'sinai', '8 באוקטובר: מתקפת הנגד — שתי התקפות גדודיות נפרדות, ובערב ברור שנכשלה'),
-        (4920, 'golan', 'קרב עמק הבכא: אוגדת איתן בולמת מתקפת שריון גדולה'),
-        (9960, 'golan', 'מבצע דוידקה: פשיטה מוסקת של סיירת הצנחנים נתגלתה, בוטלה והכוח חולץ'),
-        (10680, 'sinai', 'מוצב המזח נכנע'),
-        (17880, 'sinai', 'מתחם גשירה: ראש הגשר מורחב 9 ק״מ בלי אבדות'),
-        (17880, 'golan', 'קרב אום בוטנה במובלעת הסורית: צה״ל מול צבאות סוריה וירדן'),
-    ]:
-        ITEMS.append({"type": "note", "t0": TT(mn), "t1": TT(mn) + 8, "area": area, "text": txt})
+    ITEMS += jets("מסוק סער מצרי (אחד מ-46 בנחיתה הגדולה)", "syr", "sinai", 10, [30.60, 32.00], [30.45, 33.10], M(0, 18, 20), M(0, 18, 50), spread=0.1, back=False)
     # (e) Brigade 130 (the amphibious brigade) lands east of the Little Bitter Lake and is destroyed (w3)
     ITEMS.append({"type": "walk", "label": "חטיבה 130 המצרית (אמפיבית) (סכמטי)", "cls": "syr", "sym": "▣", "area": "sinai", "trail": "tank",
                   "legs": [{"t0": TT(M(0, 15, 0)), "t1": TT(M(0, 16, 0)), "path": [[30.22, 32.42], [30.20, 32.55]]}], "q": "בקרב זה הושמדה רוב החטיבה המצרית בטרם הספיקה לבצע את משימתה", "sk": "b130"})
@@ -812,82 +695,9 @@ def add(g):
     ITEMS.append(tag(M(0, 19, 30), [32.95, 36.20], "6.10 בלילה, בגולן: חטיבות הדרג השני הסוריות, עם אמצעי ראיית לילה יעילים (בניגוד לישראלים), מבקיעות את הקו הדק", 'הצליחו חטיבות הדרג השני של הדיוויזיות ה-5 וה-9, שלרשותן עמדו אמצעי ראיית לילה יעילים (בניגוד לצד הישראלי), להבקיע במספר צירים את קו ההגנה הישראלי הדק', "nafakh", 14, "golan"))
     t = card("adv3", 0, "בפתיחת המלחמה", 845, "sinai", "mig", "יתרון מצרי 3: מערך טילי קרקע-אוויר מהצפופים בעולם, שיחד עם תותחי נ״מ וטילי כתף יוצר מעטפת ירוט רחבה",
              'בחר צבא מצרים להשקיע בהקמת מערך טילי קרקע-אוויר מהצפופים בעולם. לצד מערך הטילים שולבו תותחי נ"מ וטילי כתף שיחד יצרו מעטפת ירוט רחבה', prec="approximate",
-             nopos=["הכיסוי מצויר כחמישה עיגולים עדינים סביב נקודות סכמטיות לאורך הגדה המערבית. הרדיוס, 10 ק״מ, הוא עומק הכיסוי ממזרח לתעלה שהסקירה מציינת (עמ׳ 9); הוא אינו טווח של סוללה מסוימת. מיקומי הסוללות וטווחן אינם מצוינים במקורות"], view="sinai")
-    # the owner 10-25: the cover is drawn as FINE CIRCLES, not an outline. The sources give no battery positions and no range per system; what they give is the depth of the cover east of the canal (~10 km, the first advance was
-    # fitted to it, IDF "Yesodot" 5 p.9). So: five rings of radius 10 km centred on schematic points along the west bank - the radius is that documented depth, NOT a system's range, and the centres are ours.
-    for c_ in ([31.05, 32.28], [30.75, 32.28], [30.45, 32.34], [30.20, 32.40], [29.95, 32.52]):
-        ITEMS.append({"type": "sam", "c": c_, "r": 10000, "t0": TT(M(0, 13, 56)), "label": "כיסוי נ״מ (סכמטי)", "area": "sinai"})  # u (end of chapter 1) is set by war_data_1973_yomkippur.py like every unit marker
+             nopos=["טווח המעטפת בק״מ: אינו מצוין במקורות; הקו מצויר סכמטית מהגדה המערבית עד גבול ההתקדמות המתוכננת (כ-10 ק״מ ממזרח לתעלה, עמ׳ 9 בסקירה)"], view="sinai")
+    ITEMS.append({"type": "arrow", "path": [[31.20, 32.22], [31.20, 32.43], [29.95, 32.68], [29.95, 32.47], [31.20, 32.22]], "t0": TT(M(0, 13, 56)), "t1": TT(M(0, 13, 58)), "label": "מעטפת הטק״א (סכמטי; הטווח אינו מצוין במקורות)", "color": "#1d5ea8", "hold": 600, "area": "sinai", "trail": "foot"})
     ITEMS.append(tag(M(0, 14, 5), [31.28, 32.10], "הצליחה הותאמה לכיסוי ״מטריית הטילים״: התקדמות כוחות היבשה נקבעה לפי טווח הכיסוי", 'התאימה את התקדמות כוחות היבשה בהתאם לכיסוי "מטריית הטילים"', "idf", 16, "sinai"))
     ITEMS.append(tag(M(0, 14, 8), [29.80, 32.20], "סוללות SA-2 ו-SA-3 נייחות, SA-6 ממונעות, ZSU-23-4 וטילי כתף סטרלה-2", 'מערך זה כלל סוללות טילי קרקע-אוויר נייחים מדגם SA-2 ו-SA-3, סוללות ממונעות מדגם SA-6 ותותחי נ"מ ניידים על גבי רכב קרבי משוריין מסוג ZSU-23-4', "badr", 16, "sinai"))
     for _it in ITEMS:      # drawn on purpose over water (checklist 17 exempt): bombs falling into the sea off Nahariya, the air-defence envelope outline
-        if _it.get("type") == "arrow" and any(k in (_it.get("label") or "") for k in ("מעטפת הטק״א",)): _it["water_ok"] = True
-
-    # ---- LAW (the owner 10-26): a card that names a battle with heavy losses shows the fight AND a loss marker (tools/test_war_heavy_losses.py). 'loss' items: the burning wreck of that kind with a side-coloured foot; a count only where the
-    # source gives one (ln: five Syrian ships; r7: one Osa; dm: three Osas; r10: four vessels; w17: four SAM bases), never for "heavy". Places: the card's own place; where the sources give none (y11, y22, ln, dm) the drawn
-    # forces' own schematic area, and the label says so.
-    LOSSES = [  # card minute (absolute), place or [lat, lon], side, kind, n, label
-        (M(0, 16, 5), P["b130"], "ar", "tank", None, "אבדות כבדות מצריות: רוב חטיבה 130 הושמדה (סכמטי, מיקום משוער)"),
-        (M(1, 1, 0), [35.42, 35.52], "ar", "ship", 5, "חמש ספינות סוריות הושמדו (סכמטי, מיקום משוער)"),
-        (M(0, 22, 30), [31.70, 32.35], "ar", "ship", 1, "סטי״ל מצרי מדגם אוסה הוטבע (סכמטי, מיקום משוער)"),
-        (3480 + 30, [30.65, 32.80], "iaf", "tank", None, "אוגדה 162 ספגה אבדות כבדות במתקפת הנגד (סכמטי, מיקום משוער: ממזרח לתעלה)"),
-        (4347 + 60, [32.00, 30.68], "ar", "ship", 3, "שלוש ספינות טילים מצריות הוטבעו (סכמטי, מיקום משוער)"),
-        (11970 + 10, P["mabuk"], "ar", "tank", None, "חטיבה 3 המצרית הושמדה במארב (סכמטי, מיקום משוער)"),
-        (12000 + 120, [30.40, 32.97], "ar", "tank", None, "אבדות מצריות כבדות בהתקפה הרבתית של 14 באוקטובר (סכמטי, מיקום משוער: ממזרח לתעלה)"),
-        (15000 + 30, P["missile16"], "ar", "sam", 4, "ארבעה בסיסי טק״א הושמדו בפשיטה (סכמטי)"),
-        (15720 + 30, P["chinese"], "iaf", "tank", None, "גדוד 890 ספג אבדות כבדות בפתיחת הציר (סכמטי)"),
-        (15780 + 20, P["portsaid"], "ar", "ship", 4, "ארבעה כלי שיט מצריים הוטבעו בנמל (סכמטי)"),
-        (16560 + 40, P["sarap"], "iaf", "tank", None, "פלוגת חטיבה 247 נסוגה אחרי אבדות כבדות (סכמטי)"),
-        (26520 + 60, P["suez"], "iaf", "tank", None, "אבדות כבדות לצה״ל בקרב העיר סואץ (סכמטי)"),
-    ]
-    for mn, pos, sd, kd, n, lab in LOSSES:
-        ITEMS.append({"type": "loss", "at": [round(pos[0], 4), round(pos[1], 4)], "t": TT(mn), "side": sd, "kind": kd, **({"n": n} if n else {}), "label": lab, "area": "sea" if kd == "ship" else "sinai"})
-
-    # ---- the owner 10-26 (sunk ships): a ship the source says sank is drawn until it sinks (item "sunk" = scene time), then only its burning wreck mark stays, and that mark goes 6 simulated hours after the sinking (template SINK_MIN).
-    # Which of the drawn symbols sank is schematic where the source gives only a count: Latakia all five Syrian ships; Port Said 1 Osa; Damietta 3 of the 4 Osas ("אחת נמלטת").
-    def _sink(match, n, t_lo, t_hi, loss_hint):
-        got = [it for it in ITEMS if it["type"] == "walk" and match in (it.get("label") or "") and t_lo <= it["legs"][0]["t0"] <= t_hi][:n]
-        for it in got:
-            it["sunk"] = round(it["legs"][-1]["t1"] + 0.6, 2)
-        if got:
-            tt = max(it["sunk"] for it in got)
-            for ls in ITEMS:
-                if ls["type"] == "loss" and loss_hint in ls["label"]:
-                    ls["t"] = tt
-    _sink("סורית", 5, 100, 300, "חמש ספינות סוריות")            # K-123, the minesweeper and the three missile boats of the Latakia battle
-    _sink("אוסה מצרית (סכמטי)", 1, 100, 300, "סטי״ל מצרי מדגם אוסה")
-    _sink("אוסה מצרית ", 3, 400, 600, "שלוש ספינות טילים מצריות")
-
-    # ---- the owner 10-26 ("the helicopters came, dropped the commando; return them to their base"): every helicopter that lands flies back to the base it left from and is gone there (a landed helicopter never stays parked).
-    # The base is the first point of its own flight (west of the canal; schematic, the sources name none); the return takes as long as the way out, after 1.2 scene-seconds on the ground.
-    for _it in ITEMS:
-        if _it["type"] == "walk" and (_it.get("label") or "").startswith("מסוק") and len(_it["legs"]) == 1:
-            lg0 = _it["legs"][0]; a, b = lg0["path"][0], lg0["path"][-1]
-            dur = max(1.2, (lg0["t1"] - lg0["t0"]))
-            _it["legs"].append({"t0": round(lg0["t1"] + 1.2, 2), "t1": round(lg0["t1"] + 1.2 + dur, 2), "path": [b, a]})
-            _it["u"] = round(lg0["t1"] + 1.2 + dur + 0.6, 2)
-
-
-    # ---------------- the owner 10-26: division 252 (עוצבת סיני), from its own article - the Yom Kippur section, every quote verbatim ----------------
-    # Compared with what the page had: the page drew the division only as order-of-battle symbols (o2, o3), the death of its commander (i12, IDF PDF) and the Adabiya move (i17). New here: the failure of "פקודת שובך יונים" and the
-    # damage to the division on 6 Oct, the second day (130 tanks left, four guns for the besieged strongholds), the counterattack of the morning of 8 Oct in the central sector, and the 18 Oct decision to cross and attack toward Suez.
-    # The article gives NO places for these: the drawing is schematic and labelled.
-    CAN = [30.60, 32.40]
-    t = wk("d252a", "sinai252", "עוצבת סיני", 0, "14:00", 840, "sinai", "tank", "אוגדה 252: ״פקודת שובך יונים״ לא עלתה יפה; העוצבה נפגעה קשות",
-           'בשבת, 6 באוקטובר 1973, בשעה 14:00, פרצה מלחמת יום הכיפורים [...] תוכנית המגננה של צה"ל, שנודעה בשם "פקודת שובך יונים", התבססה על עיכוב המצרים בקו המעוזים ולא עלתה יפה. המצרים צלחו את התעלה וגשריהם שנפגעו על ידי חיל האוויר תוקנו במהירות. העוצבה נפגעה קשות',
-           prec="approximate", nopos=["מקום האירוע: אינו בערך; מצויר על קו התעלה, סכמטי"])
-    ITEMS.append({"type": "loss", "at": [30.58, 32.41], "t": round(t + 2, 2), "side": "iaf", "kind": "tank", "label": "העוצבה נפגעה קשות (הערך אינו נותן מספר; סכמטי, מיקום משוער)", "area": "sinai"})
-    t = wk("d252b", "sinai252", "עוצבת סיני", 1, "היום השני", 600, "sinai", "tank", "אוגדה 252, היום השני: נותרו 130 טנקים; ארבעה קני ארטילריה לסיוע למעוזים המכותרים, והמעוזים נופלים בזה אחר זה",
-           'ביום השני למלחמה נותרו בעוצבה 130 טנקים בלבד (שהם כמחצית הכוח), ותוכנית טיהור קו-התעלה אשר כללה חדירה אל המעוזים שנפלו השתבשה. אלוף מנדלר הורה לסייע למעוזים המכותרים על ידי ארבעת קני הארטילריה אשר נותרו ברשותו, אולם המעוזים נפלו בזה אחר זה',
-           prec="approximate", nopos=["מקום: אינו בערך; מצויר ליד קו המעוזים, סכמטי"])
-    ITEMS += [{"type": "walk", "label": "130 טנקים נותרו בעוצבה, כמחצית הכוח (סכמטי)", "cls": "iaf", "sym": "▣", "area": "sinai", "trail": "tank", "hold": 1, "lead": 0, "sk": "sinai252", "q": "ביום השני למלחמה נותרו בעוצבה 130 טנקים בלבד (שהם כמחצית הכוח)",
-               "legs": [{"t0": round(t, 2), "t1": round(t + 2, 2), "path": [[30.60, 32.50], [30.60, 32.47]]}]},
-              {"type": "shell", "from": [30.62, 32.50], "to": [30.62, 32.36], "t0": round(t + 0.6, 2), "t1": round(t + 9, 2), "period": 1.5, "lift": 0.02, "area": "sinai", "side": "iaf"}]
-    t = wk("d252c", "sinai252", "עוצבת סיני", 2, "בבוקר", 480, "sinai", "tank", "אוגדה 252, בוקר 8 באוקטובר: מתקפת נגד בגזרה המרכזית נבלמת",
-           'בבוקר יום שני החלה מתקפת נגד בגזרה המרכזית, אשר נבלמה על ידי המצרים ככל שקרבו הטנקים אל התעלה. אוגדות מילואים נוספות הוכנסו לגזרה על-פי הוראתו של אלוף הפיקוד שמואל גונן (גורודיש)',
-           prec="approximate", nopos=["הגזרה המרכזית: אינה נקודה בערך; מצויר סכמטית"])
-    ITEMS += [arrow([[30.60, 32.70], [30.60, 32.46]], t, t + 6, "מתקפת הנגד בגזרה המרכזית (סכמטי)", BLUE, "sinai", "tank")]
-    t = wk("d252d", "sinai252", "עוצבת סיני", 12, "18 באוקטובר", 600, "sinai", "tank", "אוגדה 252, 18 באוקטובר: צולחת את התעלה, משמידה בסיסי טילים מצריים ופועלת לכיתור הארמייה השלישית",
-           'כבר ב-18 באוקטובר הוחלט כי עוצבת סיני היא שתצלח את התעלה ותתקוף לכיוון העיר סואץ. הכוחות הצולחים השמידו בסיסי טילים מצריים וטיהרו את האזור כולו, תוך כיתור הארמייה השלישית של מצרים',
-           prec="approximate", geom=[mk("suez", "fight")], nopos=["המעבר והבסיסים: אינם בערך; הנקודה בסואץ היא מרכז העיר"])
-    ITEMS += [arrow([[30.59, 32.50], [30.59, 32.27], [30.10, 32.42], P["suez"]], t, t + 14, "עוצבת סיני צולחת ותוקפת לכיוון סואץ (סכמטי)", BLUE, "sinai", "tank"),
-              {"type": "loss", "at": [30.30, 32.33], "t": round(t + 6, 2), "side": "ar", "kind": "sam", "label": "בסיסי טילים מצריים הושמדו (הערך אינו נותן מספר; סכמטי, מיקום משוער)", "area": "sinai"}]
+        if _it.get("type") == "arrow" and any(k in (_it.get("label") or "") for k in ("הפצצות נופלות לים", "מעטפת הטק״א")): _it["water_ok"] = True

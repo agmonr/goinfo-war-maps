@@ -511,9 +511,7 @@
       // an impact (boom) is drawn as a glow only if a unit symbol (tank / flight / foot / gun) is DRAWN within 15 km of it AND on screen at that moment; otherwise a quiet mark.
       // The rule reads what is drawn (marker opacity, screen position), never the data: no shell-target or last-leg exemption (the owner 10-21)
       var curItems = null, curT = 0;
-      var DUc = null;   // perf (the owner 10-26): the list of drawn units is the same for every boom of one frame; it was rebuilt per boom (129 booms x all items x every frame). pre() clears it at the start of a frame.
       function drawnUnits() {
-        if (DUc) return DUc;
         var M = o.markers && o.markers(), out = [], sz = map.getSize(); if (!M || !curItems) return null;
         for (var i = 0; i < curItems.length; i++) {
           var u = curItems[i], keys = u.type === 'arrow' ? ['s' + i + 't'] : u.type === 'shell' ? ['s' + i + 'g'] : (u.type === 'walk' || u.type === 'fly') ? ['s' + i] : [];
@@ -524,7 +522,7 @@
             out.push(ll);
           });
         }
-        DUc = out; return out;
+        return out;
       }
       function nearUnit(at) {
         var D = drawnUnits(); if (!D) return true;
@@ -532,7 +530,7 @@
         return false;
       }
       var inst = {
-        pre: function (Tsec, items) { curItems = items; curT = Tsec; DUc = null; },
+        pre: function (Tsec, items) { curItems = items; curT = Tsec; },
         wings: function () { return (curItems || []).map(function (it, i) { return it.type === 'fly' ? { i: i, label: it.label || '', n: wingCount(it.label) } : null; }).filter(Boolean); },
         inferState: function () { return { shown: INF_SHOWN, decided: Object.keys(INF_D).map(function (k) { return [k, INF_D[k]]; }) }; },
         sndState: function () { var o = {}; if (SND.g) Object.keys(SND.g).forEach(function (k) { o[k] = +SND.g[k].gain.value.toFixed(2); }); return { moving: SND.n, gain: o, loaded: !!SND.g, gunShots: GUN.shots }; },

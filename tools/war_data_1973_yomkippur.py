@@ -45,7 +45,7 @@ at = lambda day, minute: round(T0(day) + minute / 1440 * DUR, 2)
 CTX_SEQ = {"רקע": -2000, "סיכום": 40000, "אחרי": 41000}
 # the owner 10-23: a war page is about how the forces MOVED: 1-2 cards per battle, no talks / background / after, no totals. KEEP is the whole selection; every other card (and the scene items that
 # were drawn for it) is dropped at build time, its data stays here.
-KEEP = set("d252a d252b d252c d252d y1 y2 y3 y5 w4 w3 y8 y9 y10 i10 y11 i11 w9 y12 y14 i50 y16 y19 y20 i51 w10 y21 y22 w13 y24 y26 w16 w17 w18 w19 w21 y27 w22 y28 i17 y29 w24 y30 y31 i20 w20 o1 o2 o3 o4 o5 o6 o7 s1 r1 r2 r3 r4 r5 r6 r7 r8 r9 r10 r11 r12 r13 ln dm r14 w1 w2 w11 w14 sa am fu w5 adv1 adv2 adv3".split())
+KEEP = set("y1 y2 y3 y5 w4 w3 y8 y9 y10 i10 y11 i11 w9 y12 y14 i50 y16 y19 y20 i51 w10 y21 y22 w13 y24 y26 w16 w17 w18 w19 w21 y27 w22 y28 i17 y29 w24 y30 y31 i20 w20 o1 o2 o3 o4 o5 o6 o7 s1 r1 r2 r3 r4 r5 r6 r7 r8 r9 r10 r11 r12 r13 ln dm r14 w1 w2 w11 w14 sa am fu w5 adv1 adv2 adv3".split())
 OWN, _LAST, DROPPED = {}, [None, 0], set()
 CTX_ON = {"סיכום"}                 # add "רקע" / "אחרי" to bring those groups back
 CTX_N = {"רקע": 0, "סיכום": 0, "אחרי": 0}
@@ -178,15 +178,6 @@ card("y32", 18, "24 באוקטובר", 780, "all", "ship", "מסר חריף מב
 import war_data_1973_yk_more as MORE
 MORE.add(globals())
 
-# y16 (10.10): "הושלמה הדחיקה של הסורים מכל השטחים שכבשו בתחילת המלחמה, למעט מוצב החרמון": no Syrian unit stays on the Golan (the plateau up to the 1967 line, Hermon outpost excluded); they leave toward Syria (schematic)
-STOPS = [{"card": "y8", "fam": "stopped", "side": "ar", "after": 14, "wrecks": 3},                 # Syrians stopped at Hushniya in the evening: they are destroyed there
-         {"card": "y9", "fam": "stopped", "side": "ar", "wrecks": 3, "air": 4, "after": 9},        # Gamla: stopped by Israeli Skyhawks (strike runs, impacts, wrecks)
-         {"card": "d252c", "fam": "stopped", "side": "il", "at": [30.58, 32.45], "area": "sinai", "wrecks": 3},
-         {"card": "i50", "fam": "stopped", "side": "ar", "lvl": 2, "wrecks": 4},                   # supreme Syrian effort at Quneitra, stopped: very heavy level
-         {"card": "y14", "fam": "hold", "side": "ar", "at": [33.04, 35.80], "wrecks": 3, "dwrecks": 2},    # Valley of Tears: no coordinates in the source, schematic
-         {"card": "i51", "fam": "hold", "side": "ar", "at": [33.30, 36.05], "wrecks": 3, "dwrecks": 2}]
-PUSHOUT = [{"card": "y16", "side": "ar", "box": [[32.55, 35.5], [33.25, 35.97]], "to": [33.25, 36.42]}]
-
 def build_event_file():
     if _LAST[0]:
         OWN[_LAST[0]] = (_LAST[1], len(ITEMS))
@@ -209,38 +200,10 @@ def build_event_file():
           "cards_title": "אירועי המלחמה (סיכום שלנו, מצוטט מהמקורות)", "casualties": [],
           "scene": {"dur": end, "view0": VIEWS["all"], "acts": acts, "log": sorted(LOG, key=lambda l: l["t"]), "sfx": war_sfx.auto(ITEMS) + SFX, "items": ITEMS, "bases": [], "areas": [],
                     "show_places": [k for k in PLACES if k not in MORE.HIDDEN], "icons": True, "control": {"label": 'עיגול שליטה: מקום שהערך מזכיר שכוחות צה"ל נכנסו אליו (סכמטי)', "grow": GROW}},
-          "whole": {"date0": DAYS[0][0], "days": days, "chapters": chapters, "skip_idle": True, "slow_cam": True, "start_T": at(0, 835) - 1.5, "alt": MORE.alt(at(0, 835) - 1.5, at(0, 17 * 60 + 30), VIEWS)}}
+          "whole": {"date0": DAYS[0][0], "days": days, "chapters": chapters, "skip_idle": True, "slow_cam": True, "start_T": at(0, 835) - 1.5, "alt": MORE.alt(at(0, 835) - 1.5, at(0, 1440), VIEWS)}}
     for it in ev["scene"]["items"]:                       # a unit marker lives to the end of its CHAPTER (the front stays for days), never into the next one
-        if it["type"] in ("arrow", "walk", "fly", "shell", "sam", "loss") and "u" not in it:
-            d = int((it["t0"] if "t0" in it else it["t"] if it["type"] == "loss" else it["legs"][0]["t0"]) // (DUR + GAP)); it["u"] = CH_END(d)
-    # the owner 10-25 ("on 13 October no forces at all on the Egyptian front"): an order-of-battle symbol (hold=1: the unit is at its sector, no move is documented) is NOT a mission - it stays at its
-    # last documented place until the end of the war, unless the item itself says it withdrew; the popup says "holding position". Everything else keeps the end-of-chapter rule.
-    for it in ev["scene"]["items"]:
-        if it.get("hold") and "נסוג" not in it.get("label", "") and "נסיגה" not in it.get("label", ""):
-            it.pop("u", None)
-    # checklist 17 / the owner 10-26 (foot soldiers on the sea): a ground unit's path must stay on land BETWEEN its vertices too: any item with an interpolated position on water gets its path densified and snapped to land
-    import war_landcheck as _lc
-    _L = _lc.load_mask()
-    for it in ev["scene"]["items"]:
-        if _lc.land_item(it) and not it.get("water_ok") and any(not _lc.near_land(_L, p) for p, _t in _lc.interp_points(it)):
-            _lc.densify_snap(it, _L)
-    # order matters: foot units expire first (R44, the owner 10-26), then every battle card gets its missing side (R35), then the fire (R36), the white flags (R43) and the sound cues (R40)
-    import war_foot_expiry, war_battle_fill, war_battle_fire, war_surrender
-    war_foot_expiry.apply(ev)
-    import war_pushout      # R45 (the owner 10-26): a card that says a force was pushed out of an area shows it LEAVE and be gone
-    ev['pushout_specs'] = PUSHOUT
-    war_pushout.apply(ev, PUSHOUT)
-    import war_retreat; war_retreat.apply(ev, _L)      # R50 (the owner 10-26): the retreat is a disorderly group, gun toward the enemy (template), some hit on the way (seeded, deterministic)
-    war_battle_fill.fill(ev)
-    war_battle_fire.fire(ev)
-    import war_stopped      # R49/R50 (the owner 10-26): נבלם = destroyed (stops dead, wrecks), בולמת = both sides lose, מאמץ עליון = very heavy
-    for sp in STOPS: sp.setdefault("area", "golan")
-    for _ar in sorted({sp["area"] for sp in STOPS}): war_stopped.apply(ev, [sp for sp in STOPS if sp["area"] == _ar], area=_ar)
-    import war_shooters; war_shooters.apply(ev)      # R51 (the owner 10-26): a shoot-down comes after the shooting side's aircraft arrived (tools/test_war_shootdown_order.py)
-    war_surrender.fill(ev)
-    war_sfx.cover(ev["scene"])
-    import war_source_links; war_source_links.apply(ev)    # R47 (the owner 10-26): every card title links to its passage in the source (pinned revision + text fragment); gaps are listed, never guessed
-    import war_intro_data; war_intro_data.intro(ev, 'מלחמת יום הכיפורים', il_name='ישראל', ar_name='מצרים, סוריה ושאר מדינות ערב', note='הנתונים הם של הערך למלחמה כולה')   # R48 opening screen (the owner 10-26)
+        if it["type"] in ("arrow", "walk", "fly", "shell") and "u" not in it:
+            d = int((it["t0"] if "t0" in it else it["legs"][0]["t0"]) // (DUR + GAP)); it["u"] = CH_END(d)
     return ev
 
 def _norm(s):
