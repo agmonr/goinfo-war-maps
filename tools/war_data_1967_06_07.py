@@ -148,7 +148,7 @@ for i in range(3): boom([P["nablus"][0] - .01 * i, P["nablus"][1] + .01 * i], 10
 arrow([P["qalqilya"], P["tulkarm"]], 108.5, 112, "חטיבה 5 (סכמטי)", "center", hold=6)
 mark(P["hawara"], 112.5, 116, "גדוד 104 נבלם במחנה חווארה", "center")
 # act 10 (116-128) Gaza finish
-arrow([[31.47, 34.43], P["gaza"]], 116.5, 120, "חטיבה 35 (סכמטי)", "sinai", hold=6)
+arrow([[31.50, 34.40], P["gaza"]], 116.5, 120, "חטיבה 35 (סכמטי)", "sinai", hold=6)
 for i in range(4): boom([P["gaza"][0] + .01 * (i % 2) - .005, P["gaza"][1] + .012 * (i // 2) - .006], 118 + 1.3 * i, area="sinai", k="cannon" if i % 2 else "thud")
 mark(P["gaza"], 124, 128, "בצהרי 7 ביוני: הושלם כיבוש עזה והרצועה", "sinai")
 # act 11 (128-146) Jerusalem Brigade south

@@ -29,12 +29,11 @@ def apply(ev, specs):
         a = act_of(sc, c)
         if not a: continue
         T = a["s"]
-        moved = units_in_box(items, sp["side"], sp["box"], T); ev.setdefault("pushout_moved", {})[sp["card"]] = len(moved)
-        for k, i in enumerate(moved):
+        for k, i in enumerate(units_in_box(items, sp["side"], sp["box"], T)):
             it = items[i]; p = last_pos(it); t0 = T + 1.0 + 0.25 * k; t1 = t0 + 4.0
             lab = (it.get("label") or "").replace(" (סכמטי)", "")
             if it["type"] == "walk" and it["legs"][-1]["t1"] <= t0:
-                it["legs"].append({"t0": round(t0, 2), "t1": round(t1, 2), "path": [p, sp["to"]]}); it["pushout_leg"] = sp["card"]    # tools/war_retreat.py splits this leg into the disorderly retreat group
+                it["legs"].append({"t0": round(t0, 2), "t1": round(t1, 2), "path": [p, sp["to"]]})
             else:
                 items.append({"type": "walk", "label": f"נסיגה: {lab} (סכמטי)", "cls": "syr" if sp["side"] == "ar" else "iaf", "sym": "▣", "area": it.get("area"), "trail": it.get("trail") or "tank", "lead": 0, "pushout": sp["card"],
                               "legs": [{"t0": round(t0, 2), "t1": round(t1, 2), "path": [p, sp["to"]]}]})

@@ -28,39 +28,6 @@ BLOCK = f"""  <!-- Google tag (gtag.js) -->
   </script>
 """
 SKIP = re.compile(r"Google tag omitted|index_test\.html", re.I)
-EVENTLOG = '  <script type="module">import("/src/eventlog.js").catch(() => {});</script>\n'
-
-
-def measured(text):
-    """gtag + ga-guard + eventlog all present (the owner's rule 13: every page served is measured)."""
-    return "googletagmanager.com/gtag" in text and "/src/ga-guard.js" in text and "/src/eventlog.js" in text
-
-
-HOST_FALLBACK = ("<script>/* host-fallback: a LAN twin or preview serves no /src/ga-guard.js (404), so the shared guard never ran and GA counted the twin "
-                 "(the owner 2026-10-26). Same two tests, inline, before the loader. */\n"
-                 "try { if (!/(^|\\.)goinfo\\.co\\.il$/.test(location.hostname) || localStorage.getItem('gi-insider') === '1') window['ga-disable-" + GA_ID + "'] = true; } catch (e) {}</script>\n")
-
-
-def host_fallback(text):
-    """The inline host/insider test right after the guard tag, before the loader (idempotent). For pages that are published or served WITHOUT the stage's /src/
-    (the war pages, served from R2 by war_publish.sh and from bare LAN twins): there the guard file can 404 and a missing guard silently means 'count everything'."""
-    if "host-fallback" in text or "/src/ga-guard.js" not in text:
-        return text
-    return re.sub(r'(<script src="/src/ga-guard\.js"></script>\n?)', lambda m: m.group(1) + HOST_FALLBACK, text, count=1)
-
-
-def ensure(text):
-    """The page with whatever of the measurement is missing added before </head> - the SAME block ga_inject puts in a stage; the event log (page views, visible seconds) too."""
-    if "</head>" not in text:
-        return text
-    add = ""
-    if "googletagmanager.com/gtag" not in text:
-        add += BLOCK
-    elif "/src/ga-guard.js" not in text:
-        add += '  <script src="/src/ga-guard.js"></script>\n'      # a tag without its guard would count staging/LAN views
-    if "/src/eventlog.js" not in text:
-        add += EVENTLOG
-    return text.replace("</head>", add + "</head>", 1) if add else text
 
 
 def main(stage):

@@ -7,12 +7,13 @@ wording; a move is drawn only where a quote says the unit went there, every path
 Run: python3 tools/war_data_1956_kadesh.py [--check-quotes ARTICLE.txt]   (the plain text of the pinned revision; the build asserts every quote against it)
 """
 import json, sys
+import war_sfx
 from pathlib import Path
 
 DATA = Path(__file__).resolve().parent.parent / "war" / "data"
 REV = 43748748
 DAYS = [("1956-10-29", "29.10"), ("1956-10-30", "30.10"), ("1956-10-31", "31.10"), ("1956-11-01", "1.11"), ("1956-11-02", "2.11"), ("1956-11-03", "3.11"), ("1956-11-04", "4.11"), ("1956-11-05", "5.11")]
-DUR, GAP = 150, 8                      # animation units per day / pause between days
+DUR, GAP = 180, 8                      # animation units per day / pause between days
 T0 = lambda d: d * (DUR + GAP)
 
 def pl(name, lat, lon, side, basis="נקודת המקום בוויקיפדיה העברית", prec="exact"):
@@ -38,12 +39,12 @@ CARDS, ITEMS, ACTS, LOG, SFX, GROW = [], [], [], [], [], []
 def at(day, minute):               # animation time of a clock minute inside a day (linear over the day's 0..1440 minutes)
     return round(T0(day) + minute / 1440 * DUR, 2)
 
-def card(cid, day, clock, minute, area, unit, title, quote, geom=None, nopos=None, note="", prec="exact", end=None):
+def card(cid, day, clock, minute, area, unit, title, quote, geom=None, nopos=None, note="", prec="exact", end=None, src=None):
     CARDS.append({"id": cid, "t": f"{DAYS[day][1]} {clock}", "time_label": f"{DAYS[day][1]} {clock}", "start_min": day * 1440 + minute, "end_min": day * 1440 + (end if end is not None else minute),
-                  "time_precision": prec, "unit": unit, "title": title, "quote": quote, "geometry": geom or [], "no_position": nopos or [], "note": note, "area": area})
+                  "time_precision": prec, "unit": unit, "title": title, "quote": quote, "geometry": geom or [], "no_position": nopos or [], "note": note, "area": area, **({"src": src} if src else {})})
     t = at(day, minute)
     ACTS.append({"s": t, "e": t + 6, "clock": f"יום {day + 1} ({DAYS[day][1]}) · {clock} · {title[:28]}", "min": day * 1440 + minute, "view": VIEWS[area], "caps": [], "_c": cid})
-    LOG.append({"t": t + 1, "clock": f"{DAYS[day][1]} · {clock}", "q": quote, "n": title, "area": area})
+    LOG.append({"t": t + 1, "clock": f"{DAYS[day][1]} · {clock}", "q": quote, "n": title, "area": area, **({"src": src} if src else {})})
     return t
 
 VIEWS = {"all": [[27.7, 32.0], [32.9, 35.3]], "north": [[30.7, 32.2], [31.7, 34.7]], "center": [[29.9, 32.7], [31.2, 34.8]], "south": [[27.7, 33.2], [29.9, 35.1]]}
@@ -90,12 +91,15 @@ t = card("k7", 2, "בבוקר", 480, "center", "tank", "גדוד 82 של חטי�
 ITEMS += [arrow([P["nitzana"], [30.86, 34.3], P["ageila"]], t, t + 12, "גדוד 82, חטיבה 7 (סכמטי)", BLUE, "center", "tank"), boom("ageila", t + 12, "center", 2),
           arrow([P["ageila"], [30.78, 34.0], P["libni"]], t + 20, t + 40, "גדוד 82: צומת ג'בל ליבני (סכמטי)", BLUE, "center", "tank")]
 circle("ageila", 2, 480, "אבו עגילה (31 באוקטובר)", "center", 8000)
-card("k8", 2, "ביום", 540, "center", "tank", "אום-כתף נתפסת למעשה ללא קרב", 'גדוד 82 תפס את צומת ג\'בל ליבני', [mk("qataf", "fight"), mk("libni", "fight")], prec="approximate",
+card("k8", 2, "ביום", 540, "center", "tank", "גדוד 82 תופס את צומת ג'בל ליבני", 'גדוד 82 תפס את צומת ג\'בל ליבני', [mk("qataf", "fight"), mk("libni", "fight")], prec="approximate",
      note='לפי הערך, בעקבות נסיגה מצרית כללית נכבש מתחם אום-כתף ביום המחרת ללא קרב; כאן מסומן צומת ג\'בל ליבני שגדוד 82 תפס.')
 t = card("k9", 2, "בצהרי 31 באוקטובר", 720, "center", "para", "הקרב במעבר המיתלה: אש כבדה על כוח הסיור של הצנחנים",
          'כשנכנס כוח הסיור הגדודי למעבר המזרחי, בצהרי 31 באוקטובר, נפתחה עליו אש כבדה ויעילה [...] הצליחו הצנחנים לטהר את המעבר. המחיר היה כבד - 38 צנחנים הרוגים, וכ-120 פצועים',
          [mk("mitla", "fight")], ["מיקומי האויב במערות ובנקיקים: אינם בערך"], prec="approximate", end=1440 + 480)
 ITEMS += [arrow([[30.05, 33.15], P["mitla"]], t, t + 30, "כוח סיור של חטיבה 202 במעבר (סכמטי)", BLUE, "center", "foot"), boom("mitla", t + 6, "center", 2), boom([30.047, 33.04], t + 14, "center", 2)]
+# LAW (the owner 10-26): a card that names a battle with heavy losses shows the fight (both sides at the place) + a loss marker. k9: "המחיר היה כבד - 38 צנחנים הרוגים, וכ-120 פצועים" (the numbers are the source's; the enemy positions are schematic: the card says their places are not in the source)
+ITEMS += [{"type": "walk", "label": "כוח מצרי בעמדות המעבר (סכמטי, מיקום משוער)", "cls": "syr", "sym": "▣", "area": "center", "trail": "foot", "hold": 1, "legs": [{"t0": t + 2, "t1": t + 4, "path": [[30.058, 33.075], [30.056, 33.078]]}]},
+          {"type": "loss", "at": [30.05, 33.06], "t": t + 16, "side": "iaf", "kind": "inf", "label": "המחיר היה כבד: 38 צנחנים הרוגים וכ-120 פצועים (מהמקור; הסימון סכמטי, מיקום משוער)", "area": "center"}]
 t = card("k10", 2, "31 באוקטובר", 600, "center", "mig", "זוג מיסטר מפיל ארבעה ומפירים מצריים",
          'ב-31 באוקטובר, נתקל זוג מטוסי מיסטר ברביעיית מטוסי ומפייר מצריים [...] הצליח זוג המטוסים הישראלי להפיל את ארבעת המטוסים המצריים', [], ["מקום הקרב: אינו בערך"], prec="approximate")
 ITEMS.append({"type": "destroyed", "t": t, "side": "ar", "n": 4, "area": "center", "label": "ארבעה ומפירים מצריים שהופלו"})
@@ -131,9 +135,53 @@ ITEMS += [arrow([P["rafah"], P["khan"]], t, t + 14, "חטיבה 11 (סכמטי)"
 t = card("k20", 7, "עד 5 בנובמבר", 720, "south", "tank", "חטיבה 9 כובשת את ראס נצרני ואת שארם א-שייח'",
          'כבשה את מתחם תותחי החוף בראס נצרני, ולמחרת כבשה גם את שארם א-שייח', [mk("nasrani", "fight"), mk("sharm", "fight")], ["היום והשעה: אינם בערך; הטווח של הערך הוא 2–5 בנובמבר"], prec="approximate")
 ITEMS += [boom("nasrani", t, "south", 2), boom("sharm", t + 10, "south", 2)]; circle("sharm", 7, 720, "ראס נצרני ושארם א-שייח' (עד 5 בנובמבר)", "south", 9000)
-t = card("k21", 7, "5 בנובמבר", 1080, "all", "ship", "ברית המועצות שולחת אגרות חריפות לצרפת, לבריטניה ולישראל",
-         'ב-5 בנובמבר שיגר ראש ממשלת ברית המועצות, ניקולאי בולגנין, אגרות חריפות לצרפת, הממלכה המאוחדת וישראל', [], ["אירוע מדיני: אין לו מיקום על המפה"])
-LOG.append({"t": at(7, 1200), "clock": "סיכום", "q": 'ישראל: 172 הרוגים, 817 פצועים [...] מצרים: לפי ההערכות במלחמה נהרגו בין 1,500 ל-3,000 חיילים מצריים. כ-4,000 נפלו בשבי', "n": "אבדות (כפי שהערך מוסר)", "area": "all"})
+# (cut 10-23, the owner: movement only - the Soviet letters card k21 and the closing casualty line are out; no talks, no totals)
+
+# ---------------- ledger completion (the owner 10-23: check all events against all sources): battle articles of the he.wikipedia category "מלחמת סיני: קרבות" + the air arena (CC BY-SA, pinned) ----------------
+import urllib.parse
+SRC_DIR = Path("")
+WIKI = {"abuageila": ("מערכת אום כתף - אבו עגילה (1956)", 43331421), "rafah56": ("קרב רפיח (1956)", 37389041), "airarena": ("הזירה האווירית במלחמת סיני", 43705656)}
+def wp(k):
+    t, r = WIKI[k]
+    return {"k": k, "u": "https://he.wikipedia.org/w/index.php?title=" + urllib.parse.quote(t.replace(" ", "_")) + f"&oldid={r}", "t": f"ויקיפדיה העברית: {t}", "s": f"ויקיפדיה: {t}"}
+def unit(label, cls, pos, t0, t1, area, q=None, sk=None):
+    it = {"type": "walk", "label": label + " (סכמטי)", "cls": cls, "sym": "▣", "area": area, "trail": "tank", "legs": [{"t0": t0, "t1": t1, "path": [pos, [pos[0] + 0.002, pos[1] + 0.002]]}]}
+    if q: it["q"], it["sk"] = q, sk
+    return it
+def tag(t, pos, label, q, sk, area, dur=10):
+    return {"type": "mark", "at": pos, "t0": t, "t1": t + dur, "label": label, "area": area, "q": q, "sk": sk, "s": f"ויקיפדיה: {WIKI[sk][0]}"}
+d2, d3, d5 = 1, 2, 4
+t = card("g1", 0, "אחר הצהריים", 960, "center", "mig", "29 באוקטובר: רביעיית מוסטנג של טייסת 116 יוצאת למשימה, זוג מערבית וזוג מזרחית למעבר המיתלה",
+         'ב-29 באוקטובר יצאה רביעיית מטוסי P-51 מוסטנג מטייסת 116 לביצוע המשימה [...] נשלח ליעד מערבית למעבר המיתלה', src=wp("airarena"), prec="approximate",
+         nopos=["יעדי הזוגות: אינם נקודה אחת; הציור סכמטי"])
+ITEMS += [fly([(at(0, 940), at(0, 975), [P["tmain"], [30.05, 32.70]])], "מוסטנג ישראלי (סכמטי)", "center"), fly([(at(0, 941), at(0, 976), [P["tmain"], [30.06, 33.50]])], "מוסטנג ישראלי (סכמטי)", "center")]
+t = card("g2", d2, "30 באוקטובר – 2 בנובמבר", 720, "north", "tank", "30 באוקטובר – 2 בנובמבר: מערכת אבו עגילה - אוגדה 38 מול הצבא המצרי באום כתף; ניצחון ישראלי",
+         'מערכת אבו עגילה הייתה סדרה של קרבות בין אוגדה 38 לבין כוחות של צבא מצרים [...] הקרב החל ב-30 באוקטובר בשעות הצהריים, והסתיים ב-2 בנובמבר בצהריים', src=wp("abuageila"),
+         geom=[mk("qataf", "fight"), mk("ageila", "fight")], end=3 * 1440, prec="approximate")
+ITEMS += [unit("גדוד 17 המצרי", "syr", [30.84, 34.14], at(d2, 700), at(d2, 760), "north", 'במשך היום ניסה גדוד 17 המצרי לתקוף את צג"ם 82 מכיוון מזרח', "abuageila"), boom("ageila", at(d2, 740), "north", 2),
+          unit("מתחם חטיבתי מצרי מבוצר באום כתף", "syr", [30.8388, 34.2558], at(d2, 700), at(d3, 600), "north")]
+t = card("g3", d3, "31 באוקטובר – 1 בנובמבר", 780, "north", "tank", "31 באוקטובר – 1 בנובמבר: קרב רפיח - אוגדה 77 תוקפת את מערכי רפיח, בסיוע הפגזה ימית צרפתית; רפיח נכבשת בבוקר 1 בנובמבר",
+         'קרב רפיח היה מערכה שהתנהלו בה קרבות בין אוגדה 77 לבין כוחות של צבא מצרים [...] הצרפתים אף סייעו לתקיפה הישראלית על ידי הפגזה ימית של מחנות הצבא של רפיח בליל 31 באוקטובר - 1 בנובמבר', src=wp("rafah56"),
+         geom=[mk("rafah", "fight")], end=1500, prec="approximate")
+ITEMS += [unit("חטיבה 5 המצרית (שני גדודים)", "syr", [31.27, 34.27], at(d3, 760), at(d3, 1000), "north", "חטיבה משוריינת פלסטינית 87 עם 2 גדודים, חטיבה 5 המצרית עם 2 גדודים וגונדת מרגמות כבדות", "rafah56"),
+          unit("חטיבה משוריינת פלסטינית 87 (שני גדודים)", "syr", [31.30, 34.22], at(d3, 760), at(d3, 1000), "north"), arrow([[31.20, 34.10], [31.2886, 34.2519]], at(d3, 1260), at(d3, 1330), "אוגדה 77 תוקפת את רפיח", BLUE, "north"),
+          boom("rafah", at(d3, 1330), "north", 2), fly([(at(d3, 1180), at(d3, 1260), [[31.50, 33.90], [31.30, 34.20]])], "הפגזה ימית צרפתית (סכמטי)", "north")]
+t = card("g4", d5, "2 בנובמבר", 600, "south", "mig", "2 בנובמבר: חיל האוויר הישראלי תוקף את ראס נצראני ושארם א-שייח' - שני מפציצי B-17, 12 מוסטנג, 8 מוסקיטו ו-8 מיסטר",
+         'ב-2 בנובמבר ערך חיל האוויר הישראלי התקפה אווירית על אזור ראס נצראני ושארם א-שייח\', בהשתתפות שני מפציצי B-17 מבצר מעופף, 12 מטוסי P-51 מוסטנג, שמונה מטוסי מוסקיטו ושמונה מטוסי מיסטר', src=wp("airarena"),
+         geom=[mk("nasrani", "bomb"), mk("sharm", "bomb")], prec="approximate", nopos=["נתיבי הטיסה: אינם בערך; הציור סכמטי (מוצגים חלק מהמטוסים)"])
+for i in range(6):
+    ITEMS.append(fly([(at(d5, 560 + i), at(d5, 620 + i), [[29.60, 34.85 + i * 0.03], P["sharm"]]), (at(d5, 624 + i), at(d5, 684 + i), [P["sharm"], [29.60, 34.85 + i * 0.03]])], "מטוס חיל האוויר הישראלי (סכמטי)", "south"))
+ITEMS += [boom("sharm", at(d5, 620), "south", 2), boom("nasrani", at(d5, 624), "south", 2), boom("sharm", at(d5, 628), "south", 1)]
+
+# named Israeli formations as unit symbols (the main article's own sentences; positions schematic, from the cards' places)
+def isr(label, pos, d, m0, m1, q, area):
+    return unit(label, "iaf", pos, at(d, m0), at(d, m1), area, q, "main")
+ITEMS += [isr("חטיבה 4", [30.667, 34.37], 1, 360, 600, 'כדי לסייע לחטיבה 4 שהתקשתה בכיבוש המתחם', "north"),
+          isr("חטיבה 7", [30.66, 34.36], 1, 600, 840, 'הוא פקד על מח"ט 7, אורי בן-ארי, לנוע עם כל חטיבתו לקוסיימה', "north"),
+          isr("חטיבה 10", [30.886, 34.42], 1, 900, 1080, 'הורה הרמטכ"ל דיין לחטיבה 10 לפרוץ את כביש ניצנה - אבו עגילה, ולכבוש את אום-כתף', "north"),
+          isr("חטיבה 202 (צנחנים)", [30.05, 33.02], 1, 1320, 1440, 'במסע של חטיבה 202 אל צומת מצבת פרקר', "center"),
+          isr("חטיבה 27", [31.29, 34.25], 3, 0, 1440, 'חטיבה 27 פרצה דרך המוצבים, ובמהלך 1 בנובמבר כבשה את מתחם הג\'יראדי, ולמחרת כבשה את אל-עריש', "north"),
+          isr("חטיבה 9", [29.6, 34.87], 4, 300, 600, 'לאחר שכוח של חטיבה 9 השתלט על ראס אל-נקב', "south")]
 
 def build_event_file():
     end = T0(7) + DUR
@@ -146,32 +194,61 @@ def build_event_file():
     days = [{"n": n + 1, "label": lab, "T0": T0(n), "min0": n * 1440, "dur": DUR, "date": d} for n, (d, lab) in enumerate(DAYS)]
     ev = {"source": {"title": "מלחמת סיני", "url": "https://he.wikipedia.org/wiki/%D7%9E%D7%9C%D7%97%D7%9E%D7%AA_%D7%A1%D7%99%D7%A0%D7%99", "revid": REV, "revision_time": "2026-08",
                      "license": "CC BY-SA 4.0", "license_url": "https://creativecommons.org/licenses/by-sa/4.0/deed.he",
+                     "articles": {"מלחמת סיני": {"revid": REV}, **{t: {"revid": r} for k, (t, r) in WIKI.items() if k in {c["src"]["k"] for c in CARDS if c.get("src")}}},
                      "permalink": f"https://he.wikipedia.org/w/index.php?title=%D7%9E%D7%9C%D7%97%D7%9E%D7%AA_%D7%A1%D7%99%D7%A0%D7%99&oldid={REV}", "authors_url": "https://he.wikipedia.org/w/index.php?title=%D7%9E%D7%9C%D7%97%D7%9E%D7%AA_%D7%A1%D7%99%D7%A0%D7%99&action=history"},
           "places": PLACES, "areas": {}, "events": CARDS, "time_range": [0, len(DAYS) * 1440], "area_filter": AREAS, "views": VIEWS, "still_views": VIEWS, "view": VIEWS["all"],
           "cards_title": "אירועי המלחמה (סיכום שלנו על בסיס הערך)", "casualties": [],
-          "scene": {"dur": end, "view0": VIEWS["all"], "acts": acts, "log": sorted(LOG, key=lambda l: l["t"]), "sfx": SFX, "items": ITEMS, "bases": [], "areas": [],
+          "scene": {"dur": end, "view0": VIEWS["all"], "acts": acts, "log": sorted(LOG, key=lambda l: l["t"]), "sfx": war_sfx.auto(ITEMS) + SFX, "items": ITEMS, "bases": [], "areas": [],
                     "show_places": list(PLACES), "icons": True,
                     "control": {"label": 'עיגול שליטה: מקום שהערך מזכיר שכוחות צה"ל נכנסו אליו (סכמטי)', "grow": GROW}},
-          "whole": {"date0": DAYS[0][0], "days": days}}
+          "whole": {"date0": DAYS[0][0], "days": days, "skip_idle": True, "slow_cam": True}}
+    for it in ev["scene"]["items"]:                          # checklist item 14: every drawn unit/path says it is schematic
+        if it["type"] in ("arrow", "walk", "fly", "shell") and it.get("label") and "סכמטי" not in it["label"]:
+            it["label"] += " (סכמטי)"
     for it in ev["scene"]["items"]:                          # a unit marker lives to the end of ITS day (same rule as the six-days page)
-        if it["type"] in ("arrow", "walk", "fly", "shell"):
-            k = int((it.get("t0") if "t0" in it else it["legs"][0]["t0"]) // (DUR + GAP)); it["u"] = T0(k) + DUR
+        if it["type"] in ("arrow", "walk", "fly", "shell", "loss"):
+            k = int((it.get("t0") if "t0" in it else it["t"] if it["type"] == "loss" else it["legs"][0]["t0"]) // (DUR + GAP)); it["u"] = T0(k) + DUR
             if it.get("label", "").startswith(("חטיבה 9", "גדוד 88")):      # the two multi-day moves (2-5 Nov) live to the end of the war
                 it["u"] = T0(7) + DUR
-    sys.path.insert(0, str(Path(__file__).resolve().parent))
-    import war_landcheck as _lc           # the owner 10-26: a ground unit's path stays on land between its vertices too (foot soldiers on the sea)
+    import war_landcheck as _lc           # the owner 10-26: a ground unit's path stays on land between its vertices too
     _L = _lc.load_mask()
     for it in ev["scene"]["items"]:
         if _lc.land_item(it) and not it.get("water_ok") and any(not _lc.near_land(_L, p) for p, _t in _lc.interp_points(it)):
             _lc.densify_snap(it, _L)
+    sys.path.insert(0, str(Path(__file__).resolve().parent)); import war_battle_fill   # LAW R35 (the owner 10-26): every battle card animates both sides at its place; the missing side is drawn schematically at the place (tools/war_battle_fill.py)
+    import war_pushout      # R45 (the owner 10-26): the Egyptian command orders the withdrawal from Sinai (k16): Egyptian units leave Sinai
+    ev['pushout_specs'] = [{"card": "k16", "side": "ar", "box": [[29.5, 32.5], [31.3, 34.4]], "to": [30.5, 32.2]}]
+    war_pushout.apply(ev, ev['pushout_specs'])
+    import war_foot_expiry; war_foot_expiry.apply(ev)  # R44 (first): foot units leave the map 6 simulated hours after their last update; then every battle card gets its missing side
+    war_battle_fill.fill(ev)
+    import war_stopped      # R49 (the owner 10-26): "המחיר היה כבד - 38 הרוגים וכ-120 פצועים" = very heavy level (lvl 2 marker; the count is in the label because it counts people, not wrecks)
+    war_stopped.apply(ev, [{"card": "k9", "fam": "supreme", "side": "il", "area": "sinai", "label": "המחיר היה כבד: 38 צנחנים הרוגים וכ-120 פצועים (המספר מהמקור; סכמטי, מיקום משוער)"}], area="sinai")
+    import war_battle_fire      # LAW R36 / R40 (the owner 10-26): battles are visible (both sides fire) and every noisy item has a sound cue
+    war_battle_fire.fire(ev)
+    import war_source_links; war_source_links.apply(ev)    # R47: card titles link to their source passage
+    import war_intro_data; war_intro_data.intro(ev, 'מלחמת סיני (מבצע קדש)', il_name='ישראל ובעלות בריתה', ar_name='מצרים')   # R48 opening screen
+    # R47 (the owner 10-26): every card title links to its passage in the source (pinned revision + text fragment); gaps are listed, never guessed
+    import war_surrender; war_surrender.fill(ev)      # R43: white flag over every surrender report
+    war_sfx.cover(ev["scene"])
     return ev
 
+def _norm(x):
+    import unicodedata
+    return "".join(c for c in x if unicodedata.category(c) not in ("Cf", "Zs", "Cc") and not c.isspace() and not "\u0591" <= c <= "\u05c7")
+
 def check_quotes(ev, article):
-    txt = Path(article).read_text(encoding="utf-8"); bad = 0
+    txt = Path(article).read_text(encoding="utf-8"); bad = 0; cache = {}
+    def other(k):
+        if k not in cache: cache[k] = _norm((SRC_DIR / f"{k}.txt").read_text(encoding="utf-8"))
+        return cache[k]
     for c in ev["events"]:
+        k = (c.get("src") or {}).get("k")
         for seg in [s.strip() for s in c["quote"].replace("[...]", "\n").split("\n") if s.strip()]:
-            if seg not in txt:
-                bad += 1; print("QUOTE NOT IN ARTICLE:", c["id"], seg[:70])
+            if not k:
+                if seg not in txt: bad += 1; print("QUOTE NOT IN ARTICLE:", c["id"], seg[:70])
+            elif _norm(seg) not in other(k): bad += 1; print("QUOTE NOT IN", k, ":", c["id"], seg[:70])
+    for it in ev["scene"]["items"]:
+        if it.get("q") and _norm(it["q"]) not in other(it["sk"]): bad += 1; print("ITEM QUOTE NOT IN", it["sk"], ":", it.get("label"), it["q"][:60])
     return bad
 
 if __name__ == "__main__":
